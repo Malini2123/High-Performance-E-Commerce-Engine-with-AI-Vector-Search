@@ -4,15 +4,16 @@ const cors = require('cors');
 require('dotenv').config();
 
 const connectDB = require('./config/db');
+const { connectRedis } = require('./config/redis');
 
 const app = express();
 
 connectDB();
+connectRedis();
 
 app.use(cors());
 app.use(express.json());
 
-// Routes
 const productRoutes = require('./routes/products');
 app.use('/api/products', productRoutes);
 
