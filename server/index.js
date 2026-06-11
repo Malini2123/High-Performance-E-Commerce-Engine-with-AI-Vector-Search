@@ -16,6 +16,8 @@ app.use(express.json());
 
 const productRoutes = require('./routes/products');
 app.use('/api/products', productRoutes);
+const cartRoutes = require('./routes/cart');
+app.use('/api/cart', cartRoutes);
 
 app.get('/', (req, res) => {
   res.json({ 
@@ -24,7 +26,7 @@ app.get('/', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;  
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
