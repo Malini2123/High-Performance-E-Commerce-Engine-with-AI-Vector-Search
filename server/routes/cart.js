@@ -56,4 +56,55 @@ router.post('/total', async (req, res) => {
   }
 });
 
+// POST /api/cart/checkout
+// Body: { items: [{productId, qty}] }
+router.post('/checkout', async (req, res) => {
+  try {
+    const { items } = req.body;
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'No items provided' });
+    }
+
+    const results = [];
+
+    for (const item of items) {
+      const product = await Product.findOneAndUpdate(
+        { 
+          _id: item.productId, 
+          stock: { $gte: item.qty }  // only update if enough stock
+        },
+        { $inc: { stock: -item.qty } },  // decrease stock atomically
+        { returnDocument: 'after' }
+      );
+
+      if (!product) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Insufficient stock for product ${item.productId}` 
+        });
+      }
+
+      results.push({ 
+        productId: product._id, 
+        name: product.name, 
+        remainingStock: product.stock 
+      });
+    }
+
+    // Invalidate product cache since stock changed
+    const { redisClient } = require('../config/redis');
+    await redisClient.del('products:all');
+
+    res.json({ 
+      success: true, 
+      message: 'Order placed successfully', 
+      items: results 
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;
