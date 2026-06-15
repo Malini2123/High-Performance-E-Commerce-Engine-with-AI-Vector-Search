@@ -2,10 +2,11 @@ const mongoose = require('mongoose');
 const { faker } = require('@faker-js/faker');
 require('dotenv').config();
 
-const Product = require('./models/Product');
+const Product = require('./models/product');
+const { generateEmbedding } = require('./config/embeddings');
 
 const categories = [
-  'Electronics', 'Clothing', 'Books', 
+  'Electronics', 'Clothing', 'Books',
   'Home & Garden', 'Sports', 'Toys'
 ];
 
@@ -14,25 +15,37 @@ const seedProducts = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('MongoDB Connected');
 
-    // Clear existing products
     await Product.deleteMany({});
     console.log('Cleared existing products');
 
-    // Generate 100 fake products
     const products = [];
+    console.log('Generating embeddings for 100 products...');
+
     for (let i = 0; i < 100; i++) {
+      const name = faker.commerce.productName();
+      const description = faker.commerce.productDescription();
+      const category = categories[Math.floor(Math.random() * categories.length)];
+      
+      // Generate real AI embedding
+      const text = `${name} ${category} ${description}`;
+      const embedding = await generateEmbedding(text);
+
       products.push({
-        name: faker.commerce.productName(),
+        name,
         price: parseFloat(faker.commerce.price({ min: 10, max: 1000 })),
-        category: categories[Math.floor(Math.random() * categories.length)],
-        description: faker.commerce.productDescription(),
+        category,
+        description,
         stock: faker.number.int({ min: 0, max: 500 }),
-        embedding: Array.from({ length: 10 }, () => Math.random())
+        embedding
       });
+
+      if ((i + 1) % 10 === 0) {
+        console.log(`Generated ${i + 1}/100 products...`);
+      }
     }
 
     await Product.insertMany(products);
-    console.log('100 products seeded successfully!');
+    console.log('100 products seeded with real embeddings!');
     process.exit(0);
 
   } catch (error) {

@@ -18,6 +18,8 @@ const productRoutes = require('./routes/products');
 app.use('/api/products', productRoutes);
 const cartRoutes = require('./routes/cart');
 app.use('/api/cart', cartRoutes);
+const searchRoutes = require('./routes/search');
+app.use('/api/search', searchRoutes);
 
 app.get('/', (req, res) => {
   res.json({ 
