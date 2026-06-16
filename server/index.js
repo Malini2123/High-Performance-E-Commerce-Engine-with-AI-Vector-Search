@@ -26,6 +26,8 @@ const reviewRoutes = require('./routes/reviews');
 app.use('/api/reviews', reviewRoutes);
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
+const wishlistRoutes = require('./routes/wishlist');
+app.use('/api/wishlist', wishlistRoutes);
 
 app.get('/', (req, res) => {
   res.json({ 
