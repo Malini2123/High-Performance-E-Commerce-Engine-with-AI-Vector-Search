@@ -26,23 +26,51 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET single product - with cache
-router.get('/:id', async (req, res) => {
+// GET /api/products — with filters, sorting, pagination
+router.get('/', async (req, res) => {
   try {
-    const cacheKey = `product:${req.params.id}`;
-    const cached = await redisClient.get(cacheKey);
-    if (cached) {
-      console.log('Cache HIT - single product');
-      return res.json(JSON.parse(cached));
+    const {
+      category,
+      minPrice,
+      maxPrice,
+      sort = 'createdAt',
+      order = 'desc',
+      page = 1,
+      limit = 10,
+      search
+    } = req.query;
+
+    // Build filter object
+    const filter = {};
+    if (category) filter.category = { $regex: category, $options: 'i' };
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-    await redisClient.setEx(cacheKey, 60, JSON.stringify({ success: true, data: product }));
-    res.json({ success: true, data: product });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    if (search) filter.name = { $regex: search, $options: 'i' };
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const sortObj = { [sort]: order === 'asc' ? 1 : -1 };
+
+    const [products, total] = await Promise.all([
+      Product.find(filter, { embedding: 0 })
+        .sort(sortObj)
+        .skip(skip)
+        .limit(Number(limit)),
+      Product.countDocuments(filter)
+    ]);
+
+    res.json({
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / Number(limit)),
+      limit: Number(limit),
+      products
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
