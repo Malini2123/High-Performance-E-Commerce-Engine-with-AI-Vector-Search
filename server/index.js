@@ -22,6 +22,8 @@ const searchRoutes = require('./routes/search');
 app.use('/api/search', searchRoutes);
 const recRoutes = require('./routes/recommendations');
 app.use('/api/products', recRoutes);
+const reviewRoutes = require('./routes/reviews');
+app.use('/api/reviews', reviewRoutes);
 
 app.get('/', (req, res) => {
   res.json({ 
