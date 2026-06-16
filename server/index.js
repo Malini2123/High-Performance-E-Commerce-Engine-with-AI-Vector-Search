@@ -24,6 +24,8 @@ const recRoutes = require('./routes/recommendations');
 app.use('/api/products', recRoutes);
 const reviewRoutes = require('./routes/reviews');
 app.use('/api/reviews', reviewRoutes);
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
   res.json({ 
