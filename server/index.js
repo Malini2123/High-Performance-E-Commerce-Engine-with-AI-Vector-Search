@@ -45,6 +45,8 @@ const wishlistRoutes = require('./routes/wishlist');
 app.use('/api/wishlist', wishlistRoutes);
 const orderRoutes = require('./routes/orders');
 app.use('/api/orders', orderRoutes);
+const chatbotRoutes = require('./routes/chatbot');
+app.use('/api/chatbot', chatbotRoutes);
 
 app.get('/', (req, res) => {
   res.json({
