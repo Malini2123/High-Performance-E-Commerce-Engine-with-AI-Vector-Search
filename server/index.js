@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const connectDB = require('./config/db');
@@ -11,8 +12,22 @@ const app = express();
 connectDB();
 connectRedis();
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests, please try again later.' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts, please try again later.' }
+});
+
 app.use(cors());
 app.use(express.json());
+app.use('/api/', limiter);
+app.use('/api/auth', authLimiter);
 
 const productRoutes = require('./routes/products');
 app.use('/api/products', productRoutes);
@@ -28,15 +43,17 @@ const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 const wishlistRoutes = require('./routes/wishlist');
 app.use('/api/wishlist', wishlistRoutes);
+const orderRoutes = require('./routes/orders');
+app.use('/api/orders', orderRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'E-Commerce API is running!',
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
   });
 });
 
-const PORT = process.env.PORT || 5000;  
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
