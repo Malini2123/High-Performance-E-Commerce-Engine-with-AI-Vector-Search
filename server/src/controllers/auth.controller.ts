@@ -167,3 +167,28 @@ export const loginUser = async (
     });
   }
 };
+
+export const getCurrentUser = (req: Request, res: Response): void => {
+  const user = req.user;
+
+  if (!user) {
+    res.status(401).json({
+      success: false,
+      message: "Authentication is required",
+    });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      user: {
+        id: String(user._id),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        addresses: user.addresses,
+      },
+    },
+  });
+};
