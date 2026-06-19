@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import User from "../models/User.model";
+import User, { IUser } from "../models/User.model";
 import { generateToken } from "../utils/generateToken";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -9,6 +9,14 @@ const getSafeUser = (user: InstanceType<typeof User>) => ({
   name: user.name,
   email: user.email,
   phone: user.phone,
+  role: user.role,
+  addresses: user.addresses,
+});
+
+const getSafeProfile = (user: IUser) => ({
+  id: String(user._id),
+  name: user.name,
+  email: user.email,
   role: user.role,
   addresses: user.addresses,
 });
@@ -182,13 +190,136 @@ export const getCurrentUser = (req: Request, res: Response): void => {
   res.status(200).json({
     success: true,
     data: {
-      user: {
-        id: String(user._id),
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        addresses: user.addresses,
-      },
+      user: getSafeProfile(user),
     },
   });
+};
+
+export const updateProfile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication is required",
+      });
+      return;
+    }
+
+    if (
+      typeof req.body !== "object" ||
+      req.body === null ||
+      Array.isArray(req.body)
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Please provide a name or email to update",
+      });
+      return;
+    }
+
+    const allowedFields = new Set(["name", "email"]);
+    const unsupportedFields = Object.keys(req.body).filter(
+      (field) => !allowedFields.has(field)
+    );
+
+    if (unsupportedFields.length > 0) {
+      res.status(400).json({
+        success: false,
+        message: "Only name and email can be updated",
+      });
+      return;
+    }
+
+    const { name, email } = req.body;
+
+    if (name === undefined && email === undefined) {
+      res.status(400).json({
+        success: false,
+        message: "Please provide a name or email to update",
+      });
+      return;
+    }
+
+    if (name !== undefined) {
+      if (typeof name !== "string" || !name.trim()) {
+        res.status(400).json({
+          success: false,
+          message: "Name must be a non-empty string",
+        });
+        return;
+      }
+
+      user.name = name.trim();
+    }
+
+    if (email !== undefined) {
+      if (typeof email !== "string" || !email.trim()) {
+        res.status(400).json({
+          success: false,
+          message: "Email must be a non-empty string",
+        });
+        return;
+      }
+
+      const normalizedEmail = email.trim().toLowerCase();
+
+      if (!emailRegex.test(normalizedEmail)) {
+        res.status(400).json({
+          success: false,
+          message: "Please provide a valid email address",
+        });
+        return;
+      }
+
+      if (normalizedEmail !== user.email) {
+        const existingUser = await User.exists({
+          email: normalizedEmail,
+          _id: { $ne: user._id },
+        });
+
+        if (existingUser) {
+          res.status(409).json({
+            success: false,
+            message: "Email is already registered",
+          });
+          return;
+        }
+
+        user.email = normalizedEmail;
+      }
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: {
+        user: getSafeProfile(user),
+      },
+    });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === 11000
+    ) {
+      res.status(409).json({
+        success: false,
+        message: "Email is already registered",
+      });
+      return;
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while updating the profile",
+    });
+  }
 };
