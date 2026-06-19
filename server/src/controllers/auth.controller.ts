@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import User from "../models/User.model";
+import { generateToken } from "../utils/generateToken";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -111,6 +112,58 @@ export const registerUser = async (
     res.status(500).json({
       success: false,
       message: "Something went wrong while registering the user",
+    });
+  }
+};
+
+export const loginUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+
+    if (
+      !email ||
+      typeof email !== "string" ||
+      !email.trim() ||
+      !password ||
+      typeof password !== "string"
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password"
+    );
+
+    if (!user || !(await user.comparePassword(password))) {
+      res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+      return;
+    }
+
+    const token = generateToken(String(user._id));
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data: {
+        user: getSafeUser(user),
+        token,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while logging in",
     });
   }
 };
