@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db";
+import authRoutes from "./routes/auth.routes";
 
 dotenv.config();
 
@@ -18,6 +19,8 @@ app.get("/api/health", (_req, res) => {
     message: "Backend server is running",
   });
 });
+
+app.use("/api/auth", authRoutes);
 
 const startServer = async () => {
   await connectDB();
