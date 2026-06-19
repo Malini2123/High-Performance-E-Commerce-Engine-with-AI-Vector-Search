@@ -323,3 +323,106 @@ export const updateProfile = async (
     });
   }
 };
+
+export const changePassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: "Authentication is required",
+      });
+      return;
+    }
+
+    if (
+      typeof req.body !== "object" ||
+      req.body === null ||
+      Array.isArray(req.body)
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Current password and new password are required",
+      });
+      return;
+    }
+
+    const allowedFields = new Set(["currentPassword", "newPassword"]);
+    const unsupportedFields = Object.keys(req.body).filter(
+      (field) => !allowedFields.has(field)
+    );
+
+    if (unsupportedFields.length > 0) {
+      res.status(400).json({
+        success: false,
+        message: "Only currentPassword and newPassword can be provided",
+      });
+      return;
+    }
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (
+      !currentPassword ||
+      typeof currentPassword !== "string" ||
+      !currentPassword.trim()
+    ) {
+      res.status(400).json({
+        success: false,
+        message: "Current password is required",
+      });
+      return;
+    }
+
+    if (!newPassword || typeof newPassword !== "string") {
+      res.status(400).json({
+        success: false,
+        message: "New password is required",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({
+        success: false,
+        message: "New password must be at least 6 characters long",
+      });
+      return;
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: "Authenticated user no longer exists",
+      });
+      return;
+    }
+
+    const isCurrentPasswordValid = await user.comparePassword(currentPassword);
+
+    if (!isCurrentPasswordValid) {
+      res.status(401).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+      return;
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while changing the password",
+    });
+  }
+};
