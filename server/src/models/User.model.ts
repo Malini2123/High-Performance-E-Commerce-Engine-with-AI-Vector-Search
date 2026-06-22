@@ -1,7 +1,8 @@
 import bcrypt from "bcryptjs";
-import mongoose, { Document, Model, Schema } from "mongoose";
+import mongoose, { Document, Model, Schema, Types } from "mongoose";
 
 export interface IAddress {
+  _id?: Types.ObjectId;
   label: string;
   fullName: string;
   phone: string;
@@ -74,9 +75,6 @@ const addressSchema = new Schema<IAddress>(
       type: Boolean,
       default: false,
     },
-  },
-  {
-    _id: false,
   }
 );
 
