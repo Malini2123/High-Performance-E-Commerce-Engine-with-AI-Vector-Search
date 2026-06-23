@@ -7,7 +7,14 @@ const { redisClient } = require('../config/redis');
 router.get('/', async (req, res) => {
   try {
     const start = Date.now();
-    const cached = await redisClient.get('products:all');
+    let cached = null;
+    if (redisClient.isOpen && redisClient.isReady) {
+      try {
+        cached = await redisClient.get('products:all');
+      } catch (cacheErr) {
+        console.warn('Redis Get Error:', cacheErr.message);
+      }
+    }
     if (cached) {
       const duration = Date.now() - start;
       console.log(`Cache HIT - ${duration}ms`);
@@ -17,7 +24,13 @@ router.get('/', async (req, res) => {
     console.log('Cache MISS - fetching from MongoDB');
     const products = await Product.find({});
     const response = { success: true, count: products.length, data: products };
-    await redisClient.setEx('products:all', 60, JSON.stringify(response));
+    if (redisClient.isOpen && redisClient.isReady) {
+      try {
+        await redisClient.setEx('products:all', 60, JSON.stringify(response));
+      } catch (cacheErr) {
+        console.warn('Redis Set Error:', cacheErr.message);
+      }
+    }
     const duration = Date.now() - start;
     console.log(`Cache MISS completed - ${duration}ms`);
     res.json(response);
@@ -30,7 +43,14 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const cacheKey = `product:${req.params.id}`;
-    const cached = await redisClient.get(cacheKey);
+    let cached = null;
+    if (redisClient.isOpen && redisClient.isReady) {
+      try {
+        cached = await redisClient.get(cacheKey);
+      } catch (cacheErr) {
+        console.warn('Redis Get Product Error:', cacheErr.message);
+      }
+    }
     if (cached) {
       console.log('Cache HIT - single product');
       return res.json(JSON.parse(cached));
@@ -39,7 +59,13 @@ router.get('/:id', async (req, res) => {
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
-    await redisClient.setEx(cacheKey, 60, JSON.stringify({ success: true, data: product }));
+    if (redisClient.isOpen && redisClient.isReady) {
+      try {
+        await redisClient.setEx(cacheKey, 60, JSON.stringify({ success: true, data: product }));
+      } catch (cacheErr) {
+        console.warn('Redis Set Product Error:', cacheErr.message);
+      }
+    }
     res.json({ success: true, data: product });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -50,7 +76,13 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const product = await Product.create(req.body);
-    await redisClient.del('products:all');
+    if (redisClient.isOpen && redisClient.isReady) {
+      try {
+        await redisClient.del('products:all');
+      } catch (cacheErr) {
+        console.warn('Redis Del Error:', cacheErr.message);
+      }
+    }
     res.status(201).json({ success: true, data: product });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -66,9 +98,15 @@ router.put('/:id', async (req, res) => {
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
-    await redisClient.del('products:all');
-    await redisClient.del(`product:${req.params.id}`);
-    console.log('Cache INVALIDATED after update');
+    if (redisClient.isOpen && redisClient.isReady) {
+      try {
+        await redisClient.del('products:all');
+        await redisClient.del(`product:${req.params.id}`);
+        console.log('Cache INVALIDATED after update');
+      } catch (cacheErr) {
+        console.warn('Redis Invalidation Error:', cacheErr.message);
+      }
+    }
     res.json({ success: true, data: product });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -82,9 +120,15 @@ router.delete('/:id', async (req, res) => {
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
-    await redisClient.del('products:all');
-    await redisClient.del(`product:${req.params.id}`);
-    console.log('Cache INVALIDATED after delete');
+    if (redisClient.isOpen && redisClient.isReady) {
+      try {
+        await redisClient.del('products:all');
+        await redisClient.del(`product:${req.params.id}`);
+        console.log('Cache INVALIDATED after delete');
+      } catch (cacheErr) {
+        console.warn('Redis Invalidation Error:', cacheErr.message);
+      }
+    }
     res.json({ success: true, message: 'Product deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
