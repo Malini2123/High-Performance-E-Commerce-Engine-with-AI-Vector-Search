@@ -12,6 +12,7 @@ import {
   updateProfile,
 } from "../controllers/auth.controller";
 import { authenticate } from "../middlewares/auth.middleware";
+import { authorizeRoles } from "../middlewares/role.middleware";
 
 const router = Router();
 
@@ -23,5 +24,16 @@ router.put("/change-password", authenticate, changePassword);
 router.post("/addresses", authenticate, addAddress);
 router.put("/addresses/:addressId", authenticate, updateAddress);
 router.delete("/addresses/:addressId", authenticate, deleteAddress);
+router.get(
+  "/admin-check",
+  authenticate,
+  authorizeRoles("admin"),
+  (_req, res) => {
+    res.status(200).json({
+      success: true,
+      message: "Admin access granted",
+    });
+  }
+);
 
 export default router;
