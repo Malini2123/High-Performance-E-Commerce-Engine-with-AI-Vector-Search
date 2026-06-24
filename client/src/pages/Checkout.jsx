@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, CheckCircle, Loader2 } from 'lucide-react';
+import { MapPin, CheckCircle, Loader2, ArrowLeft, CreditCard, Package } from 'lucide-react';
 
 export default function Checkout({
   cart,
@@ -10,154 +10,202 @@ export default function Checkout({
   onBackToCart,
   onGoToProducts
 }) {
+  const formatPrice = (price) => `₹${Math.round(price * 83).toLocaleString('en-IN')}`;
+
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h2 className="text-3xl font-extrabold text-white tracking-tight font-display">Secure Checkout</h2>
-        <p className="text-gray-400 text-sm mt-1">Submit your delivery details to deploy and verify your order.</p>
+    <div className="animate-fade-in">
+
+      {/* Page Header */}
+      <div className="page-header">
+        <h1 className="page-title">Checkout</h1>
+        <p className="page-subtitle">Fill in your delivery details to complete the order</p>
       </div>
 
       {cart.items.length === 0 ? (
-        <div className="glass-panel text-center p-16 space-y-4">
-          <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto" />
-          <h3 className="text-xl font-bold text-white font-display">Ready for Next Transaction</h3>
-          <p className="text-gray-400 text-sm">You do not have any items in your checkout session. Return to products catalog.</p>
+        <div className="panel empty-state">
+          <div className="empty-state-icon">
+            <CheckCircle size={32} color="var(--brand-green)" />
+          </div>
+          <h3>Cart is Empty</h3>
+          <p>You don't have any items to check out. Head back to browse products.</p>
           <button onClick={onGoToProducts} className="btn btn-primary mt-2">
             Go to Products
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Delivery Form */}
-          <form onSubmit={handlePlaceOrder} className="lg:col-span-2 glass-panel p-6 border-white/5 space-y-6">
-            <h3 className="text-lg font-bold text-white border-b border-white/5 pb-3 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-cyan-400" />
-              Shipping Details
-            </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}
+             className="checkout-grid">
 
-            <div className="space-y-4">
+          {/* ── Delivery Form ── */}
+          <form onSubmit={handlePlaceOrder} className="panel" style={{ padding: 28 }}>
+
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 700, marginBottom: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <MapPin size={18} color="var(--brand-teal)" />
+              Shipping Details
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div>
                 <label className="label">Street Address</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   value={address.street}
-                  onChange={(e) => setAddress({...address, street: e.target.value})}
-                  className="input-field" 
+                  onChange={(e) => setAddress({ ...address, street: e.target.value })}
+                  className="input-field"
+                  placeholder="e.g. 123 Tech Park Avenue"
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
                 <div>
                   <label className="label">City</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     required
                     value={address.city}
-                    onChange={(e) => setAddress({...address, city: e.target.value})}
-                    className="input-field" 
+                    onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                    className="input-field"
+                    placeholder="Bangalore"
                   />
                 </div>
                 <div>
                   <label className="label">State</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     required
                     value={address.state}
-                    onChange={(e) => setAddress({...address, state: e.target.value})}
-                    className="input-field" 
+                    onChange={(e) => setAddress({ ...address, state: e.target.value })}
+                    className="input-field"
+                    placeholder="Karnataka"
                   />
                 </div>
                 <div>
                   <label className="label">Pincode</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     required
                     value={address.pincode}
-                    onChange={(e) => setAddress({...address, pincode: e.target.value})}
-                    className="input-field" 
+                    onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
+                    className="input-field"
+                    placeholder="560001"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-white/5 pt-6 space-y-4">
-              <h4 className="text-sm font-semibold text-white">Payment Method Simulator</h4>
-              <div className="p-4 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-3.5 h-3.5 rounded-full border-4 border-cyan-400" />
+            {/* Payment Method */}
+            <div style={{ marginTop: 28, paddingTop: 20, borderTop: '1px solid var(--border-light)' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <CreditCard size={16} color="var(--text-muted)" />
+                Payment Method
+              </h3>
+              <div style={{
+                padding: '14px 18px',
+                border: '1.5px solid var(--brand-teal)',
+                borderRadius: 10,
+                background: '#f0f9ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 14, height: 14, borderRadius: '50%', border: '4px solid var(--brand-teal)', background: '#fff' }} />
                   <div>
-                    <p className="text-sm font-bold text-white">Direct Engine Checkout (Sandbox)</p>
-                    <p className="text-[10px] text-gray-400">Order executes immediately, updating inventories automatically.</p>
+                    <p style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Direct Engine Checkout</p>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                      Sandbox mode — order executes instantly and updates inventory
+                    </p>
                   </div>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-500/30 font-bold uppercase">
-                  Mock Mode
-                </span>
+                <span className="badge badge-info" style={{ fontSize: '0.65rem' }}>Mock Mode</span>
               </div>
             </div>
 
-            <div className="pt-4 flex gap-4">
-              <button
-                type="button"
-                onClick={onBackToCart}
-                className="btn btn-outline flex-1 py-3"
-              >
+            {/* Actions */}
+            <div style={{ marginTop: 28, display: 'flex', gap: 12 }}>
+              <button type="button" onClick={onBackToCart} className="btn btn-outline" style={{ flex: 1 }}>
+                <ArrowLeft size={15} />
                 Back to Cart
               </button>
-              <button
-                type="submit"
-                disabled={processingAction}
-                className="btn btn-primary flex-1 py-3"
-              >
+              <button type="submit" disabled={processingAction} className="btn btn-primary" style={{ flex: 2, padding: '13px 20px' }}>
                 {processingAction ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Processing Transaction...
+                    <Loader2 size={16} style={{ animation: 'spinSlow 1s linear infinite' }} />
+                    Placing Order…
                   </>
                 ) : (
                   <>
-                    Place Order (${cart.total?.toFixed(2)})
-                    <CheckCircle className="w-5 h-5" />
+                    Place Order ({formatPrice(cart.total)})
+                    <CheckCircle size={16} />
                   </>
                 )}
               </button>
             </div>
           </form>
 
-          {/* Checkout Order Review Panel */}
-          <div className="glass-panel p-6 border-white/5 h-fit space-y-6">
-            <h3 className="text-lg font-bold text-white border-b border-white/5 pb-3 font-display">Review Order</h3>
-            
-            <div className="space-y-3 divide-y divide-white/5 max-h-72 overflow-y-auto pr-1">
-              {cart.items.map(item => (
-                <div key={item._id} className="pt-3 first:pt-0 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-bold text-white line-clamp-1">{item.product?.name}</p>
-                    <p className="text-[10px] text-gray-400">Qty: {item.quantity} × ${item.priceAtAdd.toFixed(2)}</p>
+          {/* ── Order Review Panel ── */}
+          <div className="panel" style={{ padding: 24 }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem', marginBottom: 18, paddingBottom: 14, borderBottom: '1px solid var(--border-light)' }}>
+              Order Review
+            </h3>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, maxHeight: 280, overflowY: 'auto', paddingRight: 4 }}>
+              {cart.items.map((item, i) => (
+                <div key={item._id} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                  padding: '12px 0',
+                  borderBottom: i < cart.items.length - 1 ? '1px solid var(--border-light)' : 'none'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 36, height: 36, background: 'var(--bg-placeholder)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Package size={16} color="rgba(0,0,0,0.18)" />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                        {item.product?.name}
+                      </p>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                        Qty: {item.quantity} × {formatPrice(item.priceAtAdd)}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-sm font-semibold text-white">${(item.priceAtAdd * item.quantity).toFixed(2)}</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                    {formatPrice(item.priceAtAdd * item.quantity)}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-white/5 pt-4 space-y-2">
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>Subtotal</span>
-                <span>${cart.total?.toFixed(2)}</span>
+            <hr className="divider" style={{ margin: '16px 0 14px' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                <span>Subtotal</span><span>{formatPrice(cart.total)}</span>
               </div>
-              <div className="flex justify-between text-xs text-gray-400">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                 <span>Shipping</span>
-                <span className="text-emerald-400">Free</span>
+                <span style={{ color: 'var(--brand-green)', fontWeight: 600 }}>Free</span>
               </div>
-              <div className="flex justify-between text-sm font-bold text-white pt-2">
-                <span>Total Amount</span>
-                <span className="text-cyan-400">${cart.total?.toFixed(2)}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: 4 }}>
+                <span>Total</span>
+                <span style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(cart.total)}</span>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 800px) {
+          .checkout-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 560px) {
+          .checkout-grid form > div:nth-child(2) > div:first-child {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

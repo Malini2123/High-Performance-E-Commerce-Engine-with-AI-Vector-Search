@@ -347,14 +347,14 @@ export default function App() {
   const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-body)' }}>
       {/* Toast Notification Container */}
       <Toast toasts={toasts} />
 
       {/* Main Header / Navigation */}
-      <Navbar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         cartItemCount={cartItemCount}
         wishlistCount={wishlistCount}
         pendingOrdersCount={pendingOrdersCount}
@@ -363,14 +363,14 @@ export default function App() {
         users={USERS}
         onUserChange={(u) => {
           setCurrentUser(u);
-          showToast(`Switched user context to ${u.name}`);
+          showToast(`Switched to ${u.name}`);
         }}
       />
 
       {/* Main Content Body */}
-      <main className="flex-1 page-container w-full max-w-7xl px-6 py-8">
+      <main className="page-container" style={{ flex: 1 }}>
         {activeTab === 'products' && (
-          <Products 
+          <Products
             products={products}
             loadingProducts={loadingProducts}
             wishlist={wishlist}
@@ -383,7 +383,7 @@ export default function App() {
         )}
 
         {activeTab === 'cart' && (
-          <Cart 
+          <Cart
             cart={cart}
             loadingCart={loadingCart}
             processingAction={processingAction}
@@ -396,7 +396,7 @@ export default function App() {
         )}
 
         {activeTab === 'wishlist' && (
-          <Wishlist 
+          <Wishlist
             wishlist={wishlist}
             loadingWishlist={loadingWishlist}
             processingAction={processingAction}
@@ -407,7 +407,7 @@ export default function App() {
         )}
 
         {activeTab === 'checkout' && (
-          <Checkout 
+          <Checkout
             cart={cart}
             processingAction={processingAction}
             handlePlaceOrder={handlePlaceOrder}
@@ -419,7 +419,7 @@ export default function App() {
         )}
 
         {activeTab === 'orders' && (
-          <Orders 
+          <Orders
             orders={orders}
             loadingOrders={loadingOrders}
             processingAction={processingAction}
@@ -430,13 +430,28 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="glass-panel border-t border-white/5 rounded-none py-6 mt-12 bg-[#090818]/60">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p>© 2026 Nebula Market Engine Core. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <span>Server Link: <span className="text-emerald-400 font-bold">Active (Port 5000)</span></span>
-            <span>Redis Cache: <span className="text-emerald-400 font-bold">Connected</span></span>
-            <span>Developer Context: <span className="text-cyan-400 font-bold">@Sanker R Nath</span></span>
+      <footer style={{
+        background: 'var(--bg-navbar)',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
+        padding: '20px 24px',
+        marginTop: 'auto',
+      }}>
+        <div style={{
+          maxWidth: 1280,
+          margin: '0 auto',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          fontSize: '0.75rem',
+          color: 'rgba(255,255,255,0.4)',
+        }}>
+          <p>© 2026 ShopAI Engine. All rights reserved.</p>
+          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+            <span>Server: <span style={{ color: '#10b981', fontWeight: 600 }}>Active (Port 5000)</span></span>
+            <span>Redis: <span style={{ color: '#10b981', fontWeight: 600 }}>Connected</span></span>
+            <span>Dev: <span style={{ color: '#0ea5e9', fontWeight: 600 }}>@Sanker R Nath</span></span>
           </div>
         </div>
       </footer>
