@@ -2,17 +2,35 @@ const express = require('express');
 const router = express.Router();
 const Wishlist = require('../models/wishlist');
 const Product = require('../models/product');
+const { authenticate } = require('../middleware/auth');
 
-// GET /api/wishlist/:userId
-// Fetch wishlist for a user, populated with product details
-router.get('/:userId', async (req, res) => {
+// All wishlist routes require authentication
+// userId is always sourced from req.user.id (JWT)
+
+// GET /api/wishlist — get authenticated user's wishlist
+router.get('/', authenticate, async (req, res) => {
   try {
-    let wishlist = await Wishlist.findOne({ user: req.params.userId })
+    let wishlist = await Wishlist.findOne({ user: req.user.id })
       .populate('products', 'name price category stock description');
 
     if (!wishlist) {
-      // Return an empty wishlist structure instead of 404 to make client side easier
-      return res.json({ user: req.params.userId, products: [] });
+      return res.json({ user: req.user.id, products: [] });
+    }
+
+    res.json(wishlist);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Legacy route — kept for backward compat, always returns the authenticated user's wishlist
+router.get('/:userId', authenticate, async (req, res) => {
+  try {
+    let wishlist = await Wishlist.findOne({ user: req.user.id })
+      .populate('products', 'name price category stock description');
+
+    if (!wishlist) {
+      return res.json({ user: req.user.id, products: [] });
     }
 
     res.json(wishlist);
@@ -22,16 +40,16 @@ router.get('/:userId', async (req, res) => {
 });
 
 // POST /api/wishlist/add
-// Body: { userId, productId }
-router.post('/add', async (req, res) => {
+// Body: { productId }
+router.post('/add', authenticate, async (req, res) => {
   try {
-    const { userId, productId } = req.body;
+    const { productId } = req.body;
+    const userId = req.user.id;
 
-    if (!userId || !productId) {
-      return res.status(400).json({ error: 'userId and productId are required' });
+    if (!productId) {
+      return res.status(400).json({ error: 'productId is required' });
     }
 
-    // Verify product exists
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
@@ -42,13 +60,11 @@ router.post('/add', async (req, res) => {
       wishlist = new Wishlist({ user: userId, products: [] });
     }
 
-    // Add product if not already in wishlist
     if (!wishlist.products.includes(productId)) {
       wishlist.products.push(productId);
       await wishlist.save();
     }
 
-    // Populate and return
     await wishlist.populate('products', 'name price category stock description');
     res.status(200).json(wishlist);
   } catch (err) {
@@ -57,13 +73,14 @@ router.post('/add', async (req, res) => {
 });
 
 // DELETE /api/wishlist/remove
-// Body: { userId, productId }
-router.delete('/remove', async (req, res) => {
+// Body: { productId }
+router.delete('/remove', authenticate, async (req, res) => {
   try {
-    const { userId, productId } = req.body;
+    const { productId } = req.body;
+    const userId = req.user.id;
 
-    if (!userId || !productId) {
-      return res.status(400).json({ error: 'userId and productId are required' });
+    if (!productId) {
+      return res.status(400).json({ error: 'productId is required' });
     }
 
     const wishlist = await Wishlist.findOne({ user: userId });

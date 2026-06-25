@@ -14,21 +14,23 @@ connectRedis();
 app.use(cors());
 app.use(express.json());
 
-const productRoutes = require('./routes/products');
-app.use('/api/products', productRoutes);
-const cartRoutes = require('./routes/cart');
+// Auth routes (public)
+app.use('/api/auth', require('./routes/auth'));
 
+// Resource routes (protected per-route)
+app.use('/api/products', require('./routes/products'));
 app.use('/api/cart', require('./routes/cart'));
 app.use('/api/orders', require('./routes/order'));
 app.use('/api/wishlist', require('./routes/wishlist'));
+
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'E-Commerce API is running!',
     database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
   });
 });
 
-const PORT = process.env.PORT || 5000;  
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} - local`);
 });

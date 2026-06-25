@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/product');
 const { redisClient } = require('../config/redis');
+const { authenticate, requireRole } = require('../middleware/auth');
 
-// GET all products - with cache-aside and timing
+// GET all products — PUBLIC (everyone can browse)
 router.get('/', async (req, res) => {
   try {
     const start = Date.now();
@@ -39,7 +40,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET single product - with cache
+// GET single product — PUBLIC
 router.get('/:id', async (req, res) => {
   try {
     const cacheKey = `product:${req.params.id}`;
@@ -72,8 +73,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST create
-router.post('/', async (req, res) => {
+// POST create — ADMIN ONLY
+router.post('/', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const product = await Product.create(req.body);
     if (redisClient.isOpen && redisClient.isReady) {
@@ -89,8 +90,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT update - with cache invalidation
-router.put('/:id', async (req, res) => {
+// PUT update — ADMIN ONLY
+router.put('/:id', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(
       req.params.id, req.body, { new: true, runValidators: true }
@@ -113,8 +114,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE - with cache invalidation
-router.delete('/:id', async (req, res) => {
+// DELETE — ADMIN ONLY
+router.delete('/:id', authenticate, requireRole('admin'), async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {

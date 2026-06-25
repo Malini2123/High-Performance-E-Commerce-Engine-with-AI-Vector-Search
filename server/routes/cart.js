@@ -2,20 +2,35 @@ const express = require('express');
 const router = express.Router();
 const Cart = require('../models/cart');
 const Product = require('../models/product');
+const { authenticate } = require('../middleware/auth');
 
-// GET /api/cart/:userId
-// Get the full cart for a user, with product details populated
-router.get('/:userId', async (req, res) => {
+// All cart routes require authentication
+// userId is always sourced from req.user.id (JWT) — never trusted from body
+
+// GET /api/cart — get the authenticated user's cart
+router.get('/', authenticate, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.params.userId })
+    const cart = await Cart.findOne({ user: req.user.id })
       .populate('items.product', 'name price category stock');
-    // populate pulls name,price,category,stock from Product — not embedding
 
-    if (!cart) return res.json({ user: req.params.userId, items: [], total: 0 });
+    if (!cart) return res.json({ user: req.user.id, items: [], total: 0 });
 
-    // calculate total on the fly using snapshot price
     const total = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
+    res.json({ ...cart.toObject(), total });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
+// Legacy route kept for backward compat during migration — redirects to user's own cart
+router.get('/:userId', authenticate, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user.id })
+      .populate('items.product', 'name price category stock');
+
+    if (!cart) return res.json({ user: req.user.id, items: [], total: 0 });
+
+    const total = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
     res.json({ ...cart.toObject(), total });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -23,12 +38,12 @@ router.get('/:userId', async (req, res) => {
 });
 
 // POST /api/cart/add
-// Body: { userId, productId, quantity }
-router.post('/add', async (req, res) => {
+// Body: { productId, quantity }
+router.post('/add', authenticate, async (req, res) => {
   try {
-    const { userId, productId, quantity = 1 } = req.body;
+    const { productId, quantity = 1 } = req.body;
+    const userId = req.user.id;
 
-    // validate product exists and has enough stock
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ error: 'Product not found' });
     if (product.stock < quantity) {
@@ -42,11 +57,7 @@ router.post('/add', async (req, res) => {
     if (existing) {
       existing.quantity += quantity;
     } else {
-      cart.items.push({
-        product: productId,
-        quantity,
-        priceAtAdd: product.price   // snapshot current price
-      });
+      cart.items.push({ product: productId, quantity, priceAtAdd: product.price });
     }
 
     await cart.save();
@@ -57,10 +68,12 @@ router.post('/add', async (req, res) => {
 });
 
 // PUT /api/cart/update
-// Body: { userId, productId, quantity }
-router.put('/update', async (req, res) => {
+// Body: { productId, quantity }
+router.put('/update', authenticate, async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
+    const { productId, quantity } = req.body;
+    const userId = req.user.id;
+
     if (!quantity || quantity < 1) {
       return res.status(400).json({ error: 'Quantity must be at least 1' });
     }
@@ -71,7 +84,6 @@ router.put('/update', async (req, res) => {
     const item = cart.items.find(i => i.product.toString() === productId);
     if (!item) return res.status(404).json({ error: 'Item not in cart' });
 
-    // check stock before updating
     const product = await Product.findById(productId);
     if (product.stock < quantity) {
       return res.status(400).json({ error: `Only ${product.stock} units available` });
@@ -86,10 +98,11 @@ router.put('/update', async (req, res) => {
 });
 
 // DELETE /api/cart/remove
-// Body: { userId, productId }
-router.delete('/remove', async (req, res) => {
+// Body: { productId }
+router.delete('/remove', authenticate, async (req, res) => {
   try {
-    const { userId, productId } = req.body;
+    const { productId } = req.body;
+    const userId = req.user.id;
 
     const cart = await Cart.findOne({ user: userId });
     if (!cart) return res.status(404).json({ error: 'Cart not found' });
@@ -102,11 +115,10 @@ router.delete('/remove', async (req, res) => {
   }
 });
 
-// DELETE /api/cart/clear/:userId
-// Wipe the entire cart (needed after order placement)
-router.delete('/clear/:userId', async (req, res) => {
+// DELETE /api/cart/clear/:userId — wipe the entire cart (after order placement)
+router.delete('/clear/:userId', authenticate, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.params.userId });
+    const cart = await Cart.findOne({ user: req.user.id });
     if (!cart) return res.status(404).json({ error: 'Cart not found' });
 
     cart.items = [];
