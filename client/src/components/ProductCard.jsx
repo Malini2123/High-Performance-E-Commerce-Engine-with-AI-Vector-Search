@@ -1,6 +1,10 @@
+import { useNavigate } from 'react-router-dom';
+
 function ProductCard({ product }) {
+  const navigate = useNavigate();
+
   return (
-    <div style={styles.card}>
+    <div style={styles.card} onClick={() => navigate(`/product/${product._id}`)}>
       <div style={styles.imagePlaceholder}>
         <span style={styles.imageText}>{product.category}</span>
       </div>
@@ -13,8 +17,12 @@ function ProductCard({ product }) {
             {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
           </span>
         </div>
-        <button style={styles.button} disabled={product.stock === 0}>
-          Add to Cart
+        <button
+          style={product.stock === 0 ? {...styles.button, ...styles.buttonDisabled} : styles.button}
+          disabled={product.stock === 0}
+          onClick={(e) => { e.stopPropagation(); alert(`Added ${product.name} to cart!`); }}
+        >
+          {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
         </button>
       </div>
     </div>
@@ -28,8 +36,8 @@ const styles = {
     overflow: 'hidden',
     background: '#fff',
     boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-    transition: 'transform 0.2s, box-shadow 0.2s',
     cursor: 'pointer',
+    transition: 'transform 0.2s, box-shadow 0.2s',
   },
   imagePlaceholder: {
     height: '160px',
@@ -45,9 +53,7 @@ const styles = {
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
   },
-  info: {
-    padding: '14px',
-  },
+  info: { padding: '14px' },
   name: {
     fontSize: '15px',
     fontWeight: 600,
@@ -71,15 +77,8 @@ const styles = {
     alignItems: 'center',
     marginBottom: '10px',
   },
-  price: {
-    fontSize: '18px',
-    fontWeight: 700,
-    color: '#1a1a1a',
-  },
-  stock: {
-    fontSize: '11px',
-    color: '#888',
-  },
+  price: { fontSize: '18px', fontWeight: 700, color: '#1a1a1a' },
+  stock: { fontSize: '11px', color: '#888' },
   button: {
     width: '100%',
     padding: '10px',
@@ -90,6 +89,10 @@ const styles = {
     fontSize: '13px',
     fontWeight: 600,
     cursor: 'pointer',
+  },
+  buttonDisabled: {
+    background: '#ccc',
+    cursor: 'not-allowed',
   },
 };
 
