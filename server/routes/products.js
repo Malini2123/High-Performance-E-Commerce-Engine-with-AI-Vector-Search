@@ -3,30 +3,7 @@ const router = express.Router();
 const Product = require('../models/product');
 const { redisClient } = require('../config/redis');
 
-// GET all products - with cache-aside and timing
-router.get('/', async (req, res) => {
-  try {
-    const start = Date.now();
-    const cached = await redisClient.get('products:all');
-    if (cached) {
-      const duration = Date.now() - start;
-      console.log(`Cache HIT - ${duration}ms`);
-      return res.json(JSON.parse(cached));
-    }
-
-    console.log('Cache MISS - fetching from MongoDB');
-    const products = await Product.find({});
-    const response = { success: true, count: products.length, data: products };
-    await redisClient.setEx('products:all', 60, JSON.stringify(response));
-    const duration = Date.now() - start;
-    console.log(`Cache MISS completed - ${duration}ms`);
-    res.json(response);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// GET /api/products — with filters, sorting, pagination
+// GET /api/products — with filters, sorting, pagination and cache
 router.get('/', async (req, res) => {
   try {
     const {
@@ -40,7 +17,18 @@ router.get('/', async (req, res) => {
       search
     } = req.query;
 
-    // Build filter object
+    const isDefault = !category && !minPrice && !maxPrice && !search && page == 1;
+
+    if (isDefault) {
+      const start = Date.now();
+      const cached = await redisClient.get('products:all');
+      if (cached) {
+        console.log(`Cache HIT - ${Date.now() - start}ms`);
+        return res.json(JSON.parse(cached));
+      }
+      console.log('Cache MISS - fetching from MongoDB');
+    }
+
     const filter = {};
     if (category) filter.category = { $regex: category, $options: 'i' };
     if (minPrice || maxPrice) {
@@ -54,27 +42,52 @@ router.get('/', async (req, res) => {
     const sortObj = { [sort]: order === 'asc' ? 1 : -1 };
 
     const [products, total] = await Promise.all([
-      Product.find(filter, { embedding: 0 })
-        .sort(sortObj)
-        .skip(skip)
-        .limit(Number(limit)),
+      Product.find(filter).select('-embedding').sort(sortObj).skip(skip).limit(Number(limit)),
       Product.countDocuments(filter)
     ]);
 
-    res.json({
+    const response = {
+      success: true,
       total,
       page: Number(page),
       pages: Math.ceil(total / Number(limit)),
-      limit: Number(limit),
-      products
-    });
+      count: products.length,
+      data: products
+    };
 
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (isDefault) {
+      await redisClient.setEx('products:all', 60, JSON.stringify(response));
+      console.log(`Cache MISS completed - ${Date.now()}ms`);
+    }
+
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// POST create
+// GET /api/products/:id — single product
+router.get('/:id', async (req, res) => {
+  try {
+    const cacheKey = `product:${req.params.id}`;
+    const cached = await redisClient.get(cacheKey);
+    if (cached) {
+      return res.json({ success: true, data: JSON.parse(cached) });
+    }
+
+    const product = await Product.findById(req.params.id).select('-embedding');
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify(product));
+    res.json({ success: true, data: product });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/products — create product
 router.post('/', async (req, res) => {
   try {
     const product = await Product.create(req.body);
@@ -85,11 +98,13 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT update - with cache invalidation
+// PUT /api/products/:id — update product
 router.put('/:id', async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(
-      req.params.id, req.body, { new: true, runValidators: true }
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
     );
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
@@ -103,7 +118,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE - with cache invalidation
+// DELETE /api/products/:id — delete product
 router.delete('/:id', async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
@@ -112,10 +127,9 @@ router.delete('/:id', async (req, res) => {
     }
     await redisClient.del('products:all');
     await redisClient.del(`product:${req.params.id}`);
-    console.log('Cache INVALIDATED after delete');
-    res.json({ success: true, message: 'Product deleted' });
+    res.json({ success: true, data: {} });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: error.message });
   }
 });
 
