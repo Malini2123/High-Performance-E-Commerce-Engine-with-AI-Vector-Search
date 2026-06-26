@@ -1,6 +1,19 @@
 import React from 'react';
-import { Package, ShoppingCart, Heart, ClipboardList, User, Zap, Search } from 'lucide-react';
+import { Package, ShoppingCart, Heart, ClipboardList, Zap, Search, LogIn, LogOut, UserCircle } from 'lucide-react';
 
+/**
+ * Navbar
+ *
+ * Props:
+ *   activeTab          string
+ *   setActiveTab       (tab: string) => void
+ *   cartItemCount      number
+ *   wishlistCount      number
+ *   pendingOrdersCount number
+ *   currentUser        { name, email, role } | null
+ *   onLogin            () => void
+ *   onLogout           () => void
+ */
 export default function Navbar({
   activeTab,
   setActiveTab,
@@ -8,15 +21,14 @@ export default function Navbar({
   wishlistCount,
   pendingOrdersCount,
   currentUser,
-  setCurrentUser,
-  users,
-  onUserChange
+  onLogin,
+  onLogout,
 }) {
   const navItems = [
     { id: 'products', label: 'Products', icon: Package },
     { id: 'search',   label: 'Search',   icon: Search },
-    { id: 'cart',     label: 'Cart',     icon: ShoppingCart, count: cartItemCount, badgeClass: '' },
-    { id: 'wishlist', label: 'Wishlist', icon: Heart,        count: wishlistCount, badgeClass: 'nav-badge-rose' },
+    { id: 'cart',     label: 'Cart',     icon: ShoppingCart, count: cartItemCount,      badgeClass: '' },
+    { id: 'wishlist', label: 'Wishlist', icon: Heart,        count: wishlistCount,      badgeClass: 'nav-badge-rose' },
     { id: 'orders',   label: 'Orders',   icon: ClipboardList, count: pendingOrdersCount, badgeClass: 'nav-badge-amber' },
   ];
 
@@ -51,20 +63,28 @@ export default function Navbar({
           ))}
         </nav>
 
-        {/* ── User Switcher ── */}
-        <div className="user-switcher">
-          <User size={14} color="rgba(255,255,255,0.7)" />
-          <select
-            value={currentUser.id}
-            onChange={(e) => {
-              const u = users.find(user => user.id === e.target.value);
-              onUserChange(u);
-            }}
-          >
-            {users.map(u => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
-          </select>
+        {/* ── Auth controls ── */}
+        <div className="navbar-auth">
+          {currentUser ? (
+            <div className="navbar-user">
+              <UserCircle size={16} color="rgba(255,255,255,0.7)" />
+              <span className="navbar-username" title={currentUser.email}>
+                {currentUser.name}
+                {currentUser.role === 'admin' && (
+                  <span className="navbar-role-badge">admin</span>
+                )}
+              </span>
+              <button className="navbar-auth-btn navbar-logout-btn" onClick={onLogout} title="Sign out">
+                <LogOut size={14} />
+                <span>Logout</span>
+              </button>
+            </div>
+          ) : (
+            <button className="navbar-auth-btn navbar-login-btn" onClick={onLogin}>
+              <LogIn size={14} />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
 
       </div>

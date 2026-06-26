@@ -1,32 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Toast from './components/Toast';
+import AuthModal from './components/AuthModal';
 import Products from './pages/Products';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import confetti from 'canvas-confetti';
-
-const USERS = [
-  { id: '60d5ecb8b39f1c2bd8e12f45', name: 'Sanker (Dev User)', email: 'sanker@nebula.io' },
-  { id: '60d5ecb8b39f1c2bd8e12f46', name: 'Malini (Admin User)', email: 'malini@nebula.io' },
-  { id: '60d5ecb8b39f1c2bd8e12f47', name: 'Achala (Beta Tester)', email: 'achala@nebula.io' }
-];
+import { apiFetch, getStoredUser, clearSession } from './utils/api';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(USERS[0]);
-  const [activeTab, setActiveTab] = useState('products');
-  const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState({ items: [], total: 0 });
-  const [wishlist, setWishlist] = useState({ products: [] });
-  const [orders, setOrders] = useState([]);
-  
+  // ── Auth state ───────────────────────────────────────────────────────────────
+  const [currentUser, setCurrentUser] = useState(getStoredUser);  // restored from localStorage
+  const [showAuthModal, setShowAuthModal]  = useState(false);
+
+  // ── UI state ─────────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab]       = useState('products');
+  const [products, setProducts]         = useState([]);
+  const [cart, setCart]                 = useState({ items: [], total: 0 });
+  const [wishlist, setWishlist]         = useState({ products: [] });
+  const [orders, setOrders]             = useState([]);
+
   // Loading states
-  const [loadingProducts, setLoadingProducts] = useState(false);
-  const [loadingCart, setLoadingCart] = useState(false);
-  const [loadingWishlist, setLoadingWishlist] = useState(false);
-  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [loadingProducts, setLoadingProducts]   = useState(false);
+  const [loadingCart, setLoadingCart]           = useState(false);
+  const [loadingWishlist, setLoadingWishlist]   = useState(false);
+  const [loadingOrders, setLoadingOrders]       = useState(false);
   const [processingAction, setProcessingAction] = useState(false);
 
   // Checkout Address Form
@@ -37,7 +37,7 @@ export default function App() {
     pincode: '560001'
   });
 
-  // Custom Toast State
+  // Toast notifications
   const [toasts, setToasts] = useState([]);
 
   const showToast = (message, type = 'success') => {
@@ -48,21 +48,46 @@ export default function App() {
     }, 4000);
   };
 
-  // Fetch initial data
+  // ── Auth callbacks ────────────────────────────────────────────────────────────
+
+  const handleAuth = (user) => {
+    setCurrentUser(user);
+    setShowAuthModal(false);
+    showToast(`Welcome, ${user.name}! 👋`);
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    setCurrentUser(null);
+    setCart({ items: [], total: 0 });
+    setWishlist({ products: [] });
+    setOrders([]);
+    setActiveTab('products');
+    showToast('Logged out successfully', 'info');
+  };
+
+  // ── Data fetching ─────────────────────────────────────────────────────────────
+
   useEffect(() => {
     fetchProducts();
   }, []);
 
   useEffect(() => {
-    fetchCart(currentUser.id);
-    fetchWishlist(currentUser.id);
-    fetchOrders(currentUser.id);
+    if (currentUser) {
+      fetchCart();
+      fetchWishlist();
+      fetchOrders();
+    } else {
+      setCart({ items: [], total: 0 });
+      setWishlist({ products: [] });
+      setOrders([]);
+    }
   }, [currentUser]);
 
   const fetchProducts = async () => {
     setLoadingProducts(true);
     try {
-      const res = await fetch('/api/products');
+      const res  = await apiFetch('/api/products');
       const data = await res.json();
       if (data.success) {
         setProducts(data.data || []);
@@ -77,10 +102,10 @@ export default function App() {
     }
   };
 
-  const fetchCart = async (userId) => {
+  const fetchCart = async () => {
     setLoadingCart(true);
     try {
-      const res = await fetch(`/api/cart/${userId}`);
+      const res  = await apiFetch('/api/cart');
       const data = await res.json();
       setCart(data || { items: [], total: 0 });
     } catch (err) {
@@ -90,10 +115,10 @@ export default function App() {
     }
   };
 
-  const fetchWishlist = async (userId) => {
+  const fetchWishlist = async () => {
     setLoadingWishlist(true);
     try {
-      const res = await fetch(`/api/wishlist/${userId}`);
+      const res  = await apiFetch('/api/wishlist');
       const data = await res.json();
       setWishlist(data || { products: [] });
     } catch (err) {
@@ -103,10 +128,11 @@ export default function App() {
     }
   };
 
-  const fetchOrders = async (userId) => {
+  const fetchOrders = async () => {
     setLoadingOrders(true);
     try {
-      const res = await fetch(`/api/orders/history/${userId}`);
+      // Use /api/orders/history/<userId> — the JWT on server verifies ownership
+      const res  = await apiFetch(`/api/orders/history/${currentUser._id || currentUser.id}`);
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -116,18 +142,29 @@ export default function App() {
     }
   };
 
+  // ── Cart actions ──────────────────────────────────────────────────────────────
+
+  const requireAuth = (action) => {
+    if (!currentUser) {
+      setShowAuthModal(true);
+      showToast('Please sign in to continue', 'info');
+      return false;
+    }
+    return true;
+  };
+
   const handleAddToCart = async (productId, quantity = 1) => {
+    if (!requireAuth()) return;
     setProcessingAction(true);
     try {
-      const res = await fetch('/api/cart/add', {
+      const res  = await apiFetch('/api/cart/add', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, productId, quantity })
+        body: JSON.stringify({ productId, quantity }),
       });
       const data = await res.json();
       if (res.ok) {
         showToast('Added to Cart successfully!');
-        fetchCart(currentUser.id);
+        fetchCart();
       } else {
         showToast(data.error || 'Failed to add item to cart', 'error');
       }
@@ -143,17 +180,17 @@ export default function App() {
       handleRemoveFromCart(productId);
       return;
     }
+    if (!requireAuth()) return;
     setProcessingAction(true);
     try {
-      const res = await fetch('/api/cart/update', {
+      const res  = await apiFetch('/api/cart/update', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, productId, quantity: newQuantity })
+        body: JSON.stringify({ productId, quantity: newQuantity }),
       });
       const data = await res.json();
       if (res.ok) {
         showToast('Cart quantity updated');
-        fetchCart(currentUser.id);
+        fetchCart();
       } else {
         showToast(data.error || 'Failed to update quantity', 'error');
       }
@@ -165,17 +202,17 @@ export default function App() {
   };
 
   const handleRemoveFromCart = async (productId) => {
+    if (!requireAuth()) return;
     setProcessingAction(true);
     try {
-      const res = await fetch('/api/cart/remove', {
+      const res  = await apiFetch('/api/cart/remove', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, productId })
+        body: JSON.stringify({ productId }),
       });
       const data = await res.json();
       if (res.ok) {
         showToast('Removed from Cart', 'info');
-        fetchCart(currentUser.id);
+        fetchCart();
       } else {
         showToast(data.error || 'Failed to remove item', 'error');
       }
@@ -186,22 +223,24 @@ export default function App() {
     }
   };
 
+  // ── Wishlist actions ──────────────────────────────────────────────────────────
+
   const handleToggleWishlist = async (productId) => {
+    if (!requireAuth()) return;
     setProcessingAction(true);
     const isWishlisted = wishlist.products?.some(p => p._id === productId || p === productId);
     const endpoint = isWishlisted ? '/api/wishlist/remove' : '/api/wishlist/add';
-    const method = isWishlisted ? 'DELETE' : 'POST';
-    
+    const method   = isWishlisted ? 'DELETE' : 'POST';
+
     try {
-      const res = await fetch(endpoint, {
+      const res  = await apiFetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, productId })
+        body: JSON.stringify({ productId }),
       });
       const data = await res.json();
       if (res.ok) {
         showToast(isWishlisted ? 'Removed from Wishlist' : 'Added to Wishlist!');
-        fetchWishlist(currentUser.id);
+        fetchWishlist();
       } else {
         showToast(data.error || 'Wishlist operation failed', 'error');
       }
@@ -213,12 +252,12 @@ export default function App() {
   };
 
   const handleMoveToCart = async (productId) => {
+    if (!requireAuth()) return;
     setProcessingAction(true);
     try {
-      const cartRes = await fetch('/api/cart/add', {
+      const cartRes = await apiFetch('/api/cart/add', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, productId, quantity: 1 })
+        body: JSON.stringify({ productId, quantity: 1 }),
       });
       const cartData = await cartRes.json();
       if (!cartRes.ok) {
@@ -227,19 +266,18 @@ export default function App() {
         return;
       }
 
-      const wishRes = await fetch('/api/wishlist/remove', {
+      const wishRes = await apiFetch('/api/wishlist/remove', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id, productId })
+        body: JSON.stringify({ productId }),
       });
-      
+
       if (wishRes.ok) {
         showToast('Moved item to Cart!');
-        fetchCart(currentUser.id);
-        fetchWishlist(currentUser.id);
+        fetchCart();
+        fetchWishlist();
       } else {
         showToast('Added to Cart, but failed to remove from Wishlist', 'warning');
-        fetchCart(currentUser.id);
+        fetchCart();
       }
     } catch (err) {
       showToast('API Connection Error', 'error');
@@ -248,33 +286,28 @@ export default function App() {
     }
   };
 
+  // ── Order actions ─────────────────────────────────────────────────────────────
+
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
+    if (!requireAuth()) return;
     if (cart.items.length === 0) {
       showToast('Cart is empty', 'error');
       return;
     }
     setProcessingAction(true);
     try {
-      const res = await fetch('/api/orders/checkout', {
+      const res  = await apiFetch('/api/orders/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: currentUser.id, 
-          shippingAddress: address 
-        })
+        body: JSON.stringify({ shippingAddress: address }),
       });
       const data = await res.json();
       if (res.ok) {
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 }
-        });
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
         showToast('Order Placed Successfully! 🚀', 'success');
-        fetchCart(currentUser.id);
-        fetchOrders(currentUser.id);
-        fetchProducts(); // refresh product stocks
+        fetchCart();
+        fetchOrders();
+        fetchProducts();
         setActiveTab('orders');
       } else {
         showToast(data.error || 'Failed to place order', 'error');
@@ -287,17 +320,16 @@ export default function App() {
   };
 
   const handleCancelOrder = async (orderId) => {
+    if (!requireAuth()) return;
     if (!confirm('Are you sure you want to cancel this order?')) return;
     setProcessingAction(true);
     try {
-      const res = await fetch(`/api/orders/${orderId}/cancel`, {
-        method: 'PUT'
-      });
+      const res  = await apiFetch(`/api/orders/${orderId}/cancel`, { method: 'PUT' });
       const data = await res.json();
       if (res.ok) {
         showToast('Order cancelled and stock restored', 'info');
-        fetchOrders(currentUser.id);
-        fetchProducts(); // refresh product stocks
+        fetchOrders();
+        fetchProducts();
       } else {
         showToast(data.error || 'Failed to cancel order', 'error');
       }
@@ -308,27 +340,28 @@ export default function App() {
     }
   };
 
+  // ── Admin: seed database ──────────────────────────────────────────────────────
+
   const handleSeedDatabase = async () => {
     setProcessingAction(true);
     try {
       const mockItems = [
-        { name: 'Nebula Pro VR Headset', price: 599.99, category: 'Electronics', description: 'Immersive spatial computing headset with 8K micro-OLED displays.', stock: 15 },
-        { name: 'Quantum Core Mechanical Keyboard', price: 189.50, category: 'Electronics', description: 'Hot-swappable optical switches with programmable RGB and smart dial.', stock: 35 },
-        { name: 'Chrono-Shift smart Watch', price: 299.00, category: 'Electronics', description: 'Titanium chassis smart watch with health telemetry and solar charging.', stock: 24 },
-        { name: 'Cyberpunk Leather Bomber Jacket', price: 145.00, category: 'Clothing', description: 'Waterproof techwear bomber jacket with fiber optic accents.', stock: 50 },
-        { name: 'Aerolite Ergonomic Backpack', price: 95.00, category: 'Clothing', description: 'Anti-theft modular backpack with integrated powerbank connector.', stock: 80 },
-        { name: 'Designing E-Commerce Engines', price: 45.00, category: 'Books', description: 'A complete handbook on database architectures, caching, and APIs.', stock: 120 },
-        { name: 'Vector Search for AI Developers', price: 38.99, category: 'Books', description: 'Learn how to implement high-speed semantic queries using Pinecone and Mongo.', stock: 95 },
-        { name: 'Vortex Floating Bonsai Tree', price: 110.00, category: 'Home & Garden', description: 'Magnetic levitating plant pot that slowly spins in mid-air.', stock: 12 },
-        { name: 'Smart Hydroponic Grow Kit', price: 175.00, category: 'Home & Garden', description: 'App-controlled indoor garden with full spectrum LED grow lights.', stock: 18 },
-        { name: 'Hyper-Velocity Carbon Tennis Racket', price: 220.00, category: 'Sports', description: 'Aerodynamic racket engineered with graphene micro-matrix layers.', stock: 30 }
+        { name: 'Nebula Pro VR Headset',          price: 599.99, category: 'Electronics',   description: 'Immersive spatial computing headset with 8K micro-OLED displays.',              stock: 15  },
+        { name: 'Quantum Core Mechanical Keyboard', price: 189.50, category: 'Electronics', description: 'Hot-swappable optical switches with programmable RGB and smart dial.',           stock: 35  },
+        { name: 'Chrono-Shift Smart Watch',         price: 299.00, category: 'Electronics', description: 'Titanium chassis smart watch with health telemetry and solar charging.',         stock: 24  },
+        { name: 'Cyberpunk Leather Bomber Jacket',  price: 145.00, category: 'Clothing',    description: 'Waterproof techwear bomber jacket with fiber optic accents.',                    stock: 50  },
+        { name: 'Aerolite Ergonomic Backpack',      price: 95.00,  category: 'Clothing',    description: 'Anti-theft modular backpack with integrated powerbank connector.',               stock: 80  },
+        { name: 'Designing E-Commerce Engines',     price: 45.00,  category: 'Books',       description: 'A complete handbook on database architectures, caching, and APIs.',              stock: 120 },
+        { name: 'Vector Search for AI Developers',  price: 38.99,  category: 'Books',       description: 'Learn how to implement high-speed semantic queries using Pinecone and Mongo.',   stock: 95  },
+        { name: 'Vortex Floating Bonsai Tree',      price: 110.00, category: 'Home & Garden', description: 'Magnetic levitating plant pot that slowly spins in mid-air.',                 stock: 12  },
+        { name: 'Smart Hydroponic Grow Kit',        price: 175.00, category: 'Home & Garden', description: 'App-controlled indoor garden with full spectrum LED grow lights.',             stock: 18  },
+        { name: 'Hyper-Velocity Carbon Tennis Racket', price: 220.00, category: 'Sports',   description: 'Aerodynamic racket engineered with graphene micro-matrix layers.',              stock: 30  },
       ];
 
       for (const item of mockItems) {
-        await fetch('/api/products', {
+        await apiFetch('/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(item)
+          body: JSON.stringify(item),
         });
       }
 
@@ -341,15 +374,26 @@ export default function App() {
     }
   };
 
-  // Calculations
-  const cartItemCount = cart.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-  const wishlistCount = wishlist.products?.length || 0;
+  // ── Derived counts ────────────────────────────────────────────────────────────
+
+  const cartItemCount      = cart.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const wishlistCount      = wishlist.products?.length || 0;
   const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
+
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-body)' }}>
       {/* Toast Notification Container */}
       <Toast toasts={toasts} />
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onAuth={handleAuth}
+        />
+      )}
 
       {/* Main Header / Navigation */}
       <Navbar
@@ -359,12 +403,8 @@ export default function App() {
         wishlistCount={wishlistCount}
         pendingOrdersCount={pendingOrdersCount}
         currentUser={currentUser}
-        setCurrentUser={setCurrentUser}
-        users={USERS}
-        onUserChange={(u) => {
-          setCurrentUser(u);
-          showToast(`Switched to ${u.name}`);
-        }}
+        onLogin={() => setShowAuthModal(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Body */}
@@ -451,6 +491,7 @@ export default function App() {
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
             <span>Server: <span style={{ color: '#10b981', fontWeight: 600 }}>Active (Port 5000)</span></span>
             <span>Redis: <span style={{ color: '#10b981', fontWeight: 600 }}>Connected</span></span>
+            <span>Auth: <span style={{ color: currentUser ? '#10b981' : '#f59e0b', fontWeight: 600 }}>{currentUser ? `JWT ✓ (${currentUser.role})` : 'Guest'}</span></span>
             <span>Dev: <span style={{ color: '#0ea5e9', fontWeight: 600 }}>@Sanker R Nath</span></span>
           </div>
         </div>
