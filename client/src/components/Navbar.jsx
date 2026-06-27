@@ -1,6 +1,16 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Navbar() {
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+    window.location.reload();
+  };
+
   return (
     <nav style={styles.nav}>
       <div style={styles.container}>
@@ -11,8 +21,18 @@ function Navbar() {
           <Link to="/cart" style={styles.link}>🛒 Cart</Link>
           <Link to="/wishlist" style={styles.link}>❤️ Wishlist</Link>
           <Link to="/orders" style={styles.link}>📦 Orders</Link>
-          <Link to="/login" style={styles.link}>Login</Link>
-          <Link to="/register" style={styles.link}>Register</Link>
+
+          {user ? (
+            <>
+              <span style={styles.username}>Hi, {user.name} 👋</span>
+              <button onClick={handleLogout} style={styles.logoutBtn}>Logout</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" style={styles.link}>Login</Link>
+              <Link to="/register" style={styles.registerBtn}>Register</Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
@@ -51,6 +71,30 @@ const styles = {
     textDecoration: 'none',
     fontSize: '14px',
     fontWeight: 500,
+  },
+  username: {
+    color: '#6ee7b7',
+    fontSize: '14px',
+    fontWeight: 500,
+  },
+  logoutBtn: {
+    background: 'none',
+    border: '1px solid #555',
+    color: '#ccc',
+    padding: '6px 14px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 500,
+  },
+  registerBtn: {
+    background: '#fff',
+    color: '#1a1a1a',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: 600,
+    padding: '6px 14px',
+    borderRadius: '6px',
   },
 };
 
