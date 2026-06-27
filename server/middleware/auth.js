@@ -3,7 +3,7 @@ const User = require('../models/user');
 
 /**
  * authenticate — verifies the Bearer JWT in the Authorization header.
- * On success, attaches `req.user` = { id, name, email, role }.
+ * On success, attaches `req.user` = full User document (without password).
  */
 const authenticate = async (req, res, next) => {
   try {
@@ -15,19 +15,13 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Lightweight check — confirm user still exists in DB
-    const user = await User.findById(decoded.id).select('-passwordHash');
+    // Confirm user still exists in DB
+    const user = await User.findById(decoded.id).select('-password');
     if (!user) {
       return res.status(401).json({ error: 'User no longer exists.' });
     }
 
-    req.user = {
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    };
-
+    req.user = user; // full Mongoose document (req.user._id, req.user.role, etc.)
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
