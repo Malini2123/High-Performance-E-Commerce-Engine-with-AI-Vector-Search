@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const connectDB = require('./config/db');
@@ -11,17 +12,41 @@ const app = express();
 connectDB();
 connectRedis();
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests, please try again later.' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many login attempts, please try again later.' }
+});
+
 app.use(cors());
 app.use(express.json());
+app.use('/api/', limiter);
+app.use('/api/auth', authLimiter);
 
-// Auth routes (public)
-app.use('/api/auth', require('./routes/auth'));
-
-// Resource routes (protected per-route)
-app.use('/api/products', require('./routes/products'));
-app.use('/api/cart', require('./routes/cart'));
-app.use('/api/orders', require('./routes/order'));
-app.use('/api/wishlist', require('./routes/wishlist'));
+const productRoutes = require('./routes/products');
+app.use('/api/products', productRoutes);
+const cartRoutes = require('./routes/cart');
+app.use('/api/cart', cartRoutes);
+const searchRoutes = require('./routes/search');
+app.use('/api/search', searchRoutes);
+const recRoutes = require('./routes/recommendations');
+app.use('/api/products', recRoutes);
+const reviewRoutes = require('./routes/reviews');
+app.use('/api/reviews', reviewRoutes);
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+const wishlistRoutes = require('./routes/wishlist');
+app.use('/api/wishlist', wishlistRoutes);
+const orderRoutes = require('./routes/orders');
+app.use('/api/orders', orderRoutes);
+const chatbotRoutes = require('./routes/chatbot');
+app.use('/api/chatbot', chatbotRoutes);
 
 app.get('/', (req, res) => {
   res.json({
@@ -32,5 +57,5 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} - local`);
+  console.log(`Server running on port ${PORT}`);
 });
