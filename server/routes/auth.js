@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const { authenticate } = require('../middleware/auth');
@@ -25,14 +24,13 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ error: 'Email already registered.' });
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
     // Only allow 'admin' role if explicitly requested AND a secret header is present
     const assignedRole =
       role === 'admin' && req.headers['x-admin-key'] === process.env.ADMIN_SEED_KEY
         ? 'admin'
         : 'user';
 
-    const user = await User.create({ name, email, passwordHash, role: assignedRole });
+    const user = await User.create({ name, email, password, role: assignedRole });
     const token = signToken(user);
 
     res.status(201).json({ token, user: user.toSafeObject() });
