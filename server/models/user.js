@@ -2,37 +2,26 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-  },
-  passwordHash: {
-    type: String,
-    required: true,
-  },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user',
-  },
-}, {
-  timestamps: true,
+  name: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password: { type: String, required: true, minlength: 6 },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
+}, { timestamps: true });
+
+// Hash password before saving
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
+  const salt = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Virtual — never stored, just convenience
+// Compare plain-text password with stored hash
 userSchema.methods.comparePassword = async function (plainText) {
-  return bcrypt.compare(plainText, this.passwordHash);
+  return bcrypt.compare(plainText, this.password);
 };
 
-// Strip sensitive fields from JSON output
+// Safe object (strip sensitive fields)
 userSchema.methods.toSafeObject = function () {
   return {
     id: this._id,
