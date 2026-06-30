@@ -13,6 +13,7 @@ function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [reviewForm, setReviewForm] = useState({ userName: '', rating: 5, comment: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [added, setAdded] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +35,24 @@ function ProductDetail() {
     };
     fetchData();
   }, [id]);
+
+  const addToCart = () => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const existing = cart.find(item => item._id === product._id);
+
+    let updated;
+    if (existing) {
+      updated = cart.map(item =>
+        item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+      );
+    } else {
+      updated = [...cart, { ...product, quantity: 1 }];
+    }
+
+    localStorage.setItem('cart', JSON.stringify(updated));
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+  };
 
   const submitReview = async (e) => {
     e.preventDefault();
@@ -76,8 +95,8 @@ function ProductDetail() {
               {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
             </span>
           </div>
-          <button style={styles.addBtn} disabled={product.stock === 0}>
-            {product.stock === 0 ? 'Out of Stock' : '🛒 Add to Cart'}
+          <button style={styles.addBtn} disabled={product.stock === 0} onClick={addToCart}>
+            {product.stock === 0 ? 'Out of Stock' : added ? '✓ Added' : '🛒 Add to Cart'}
           </button>
         </div>
       </div>

@@ -3,7 +3,7 @@ const router = express.Router();
 const Product = require('../models/product');
 
 // POST /api/cart/total
-// Body: { items: [{productId, qty}], discountCode }
+// Body: { items: [{productId, quantity}], discountCode }
 router.post('/total', async (req, res) => {
   try {
     const { items, discountCode } = req.body;
@@ -18,16 +18,16 @@ router.post('/total', async (req, res) => {
     const result = await Product.aggregate([
       { $match: { _id: { $in: productIds.map(id => require('mongoose').Types.ObjectId.createFromHexString(id)) } } },
       { $addFields: {
-          qty: {
+          quantity: {
             $let: {
               vars: { item: { $arrayElemAt: [{ $filter: { input: items, as: 'i', cond: { $eq: ['$$i.productId', { $toString: '$_id' }] } } }, 0] } },
-              in: '$$item.qty'
+              in: '$$item.quantity'
             }
           }
         }
       },
-      { $addFields: { lineTotal: { $multiply: ['$price', '$qty'] } } },
-      { $group: { _id: null, subtotal: { $sum: '$lineTotal' }, itemCount: { $sum: '$qty' } } }
+      { $addFields: { lineTotal: { $multiply: ['$price', '$quantity'] } } },
+      { $group: { _id: null, subtotal: { $sum: '$lineTotal' }, itemCount: { $sum: '$quantity' } } }
     ]);
 
     if (result.length === 0) {
@@ -41,13 +41,13 @@ router.post('/total', async (req, res) => {
     if (discountCode === 'SAVE10') discount = subtotal * 0.10;
     if (discountCode === 'SAVE20') discount = subtotal * 0.20;
 
-    const total = subtotal - discount;
+    const finalTotal = subtotal - discount;
 
     res.json({
       success: true,
-      subtotal: subtotal.toFixed(2),
-      discount: discount.toFixed(2),
-      total: total.toFixed(2),
+      subtotal: Number(subtotal.toFixed(2)),
+      discount: Number(discount.toFixed(2)),
+      finalTotal: Number(finalTotal.toFixed(2)),
       itemCount: result[0].itemCount
     });
 
@@ -57,7 +57,7 @@ router.post('/total', async (req, res) => {
 });
 
 // POST /api/cart/checkout
-// Body: { items: [{productId, qty}] }
+// Body: { items: [{productId, quantity}] }
 router.post('/checkout', async (req, res) => {
   try {
     const { items } = req.body;
@@ -72,9 +72,9 @@ router.post('/checkout', async (req, res) => {
       const product = await Product.findOneAndUpdate(
         { 
           _id: item.productId, 
-          stock: { $gte: item.qty }  // only update if enough stock
+          stock: { $gte: item.quantity }  // only update if enough stock
         },
-        { $inc: { stock: -item.qty } },  // decrease stock atomically
+        { $inc: { stock: -item.quantity } },  // decrease stock atomically
         { returnDocument: 'after' }
       );
 

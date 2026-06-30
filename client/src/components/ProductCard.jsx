@@ -3,6 +3,23 @@ import { useNavigate } from 'react-router-dom';
 function ProductCard({ product }) {
   const navigate = useNavigate();
 
+  const addToCart = (e) => {
+    e.stopPropagation();
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const existing = cart.find(item => item._id === product._id);
+
+    let updated;
+    if (existing) {
+      updated = cart.map(item =>
+        item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+      );
+    } else {
+      updated = [...cart, { ...product, quantity: 1 }];
+    }
+
+    localStorage.setItem('cart', JSON.stringify(updated));
+  };
+
   return (
     <div style={styles.card} onClick={() => navigate(`/product/${product._id}`)}>
       <div style={styles.imagePlaceholder}>
@@ -20,7 +37,7 @@ function ProductCard({ product }) {
         <button
           style={product.stock === 0 ? {...styles.button, ...styles.buttonDisabled} : styles.button}
           disabled={product.stock === 0}
-          onClick={(e) => { e.stopPropagation(); alert(`Added ${product.name} to cart!`); }}
+          onClick={addToCart}
         >
           {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
         </button>
