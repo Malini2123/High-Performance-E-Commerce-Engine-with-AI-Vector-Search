@@ -3,20 +3,48 @@ const router = express.Router();
 const Cart = require('../models/cart');
 const Product = require('../models/product');
 const { authenticate } = require('../middleware/auth');
+const { redisClient } = require('../config/redis');
 
 // All cart routes require authentication
 // userId is always sourced from req.user.id (JWT) — never trusted from body
 
+// Helper to build a consistent cache key per user
+const cartCacheKey = (userId) => `cart:${userId}`;
+
+// Helper to invalidate a user's cart cache after any mutation
+const invalidateCartCache = async (userId) => {
+  try {
+    await redisClient.del(cartCacheKey(userId));
+  } catch (err) {
+    console.warn('Redis cart cache invalidation failed (non-fatal):', err.message);
+  }
+};
+
 // GET /api/cart — get the authenticated user's cart
 router.get('/', authenticate, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.user.id })
+    const userId = req.user.id;
+    const cacheKey = cartCacheKey(userId);
+
+    // --- Redis Cache Read ---
+    const cached = await redisClient.get(cacheKey);
+    if (cached) {
+      console.log(`Cart Cache HIT for user ${userId}`);
+      return res.json(JSON.parse(cached));
+    }
+    console.log(`Cart Cache MISS for user ${userId} — fetching from MongoDB`);
+
+    const cart = await Cart.findOne({ user: userId })
       .populate('items.product', 'name price category stock');
 
-    if (!cart) return res.json({ user: req.user.id, items: [], total: 0 });
+    const result = cart
+      ? { ...cart.toObject(), total: cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0) }
+      : { user: userId, items: [], total: 0 };
 
-    const total = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
-    res.json({ ...cart.toObject(), total });
+    // Cache for 120 seconds
+    await redisClient.setEx(cacheKey, 120, JSON.stringify(result));
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -25,13 +53,25 @@ router.get('/', authenticate, async (req, res) => {
 // Legacy route kept for backward compat during migration — redirects to user's own cart
 router.get('/:userId', authenticate, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.user.id })
+    const userId = req.user.id;
+    const cacheKey = cartCacheKey(userId);
+
+    const cached = await redisClient.get(cacheKey);
+    if (cached) {
+      console.log(`Cart Cache HIT (legacy route) for user ${userId}`);
+      return res.json(JSON.parse(cached));
+    }
+
+    const cart = await Cart.findOne({ user: userId })
       .populate('items.product', 'name price category stock');
 
-    if (!cart) return res.json({ user: req.user.id, items: [], total: 0 });
+    const result = cart
+      ? { ...cart.toObject(), total: cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0) }
+      : { user: userId, items: [], total: 0 };
 
-    const total = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
-    res.json({ ...cart.toObject(), total });
+    await redisClient.setEx(cacheKey, 120, JSON.stringify(result));
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -61,6 +101,7 @@ router.post('/add', authenticate, async (req, res) => {
     }
 
     await cart.save();
+    await invalidateCartCache(userId); // Bust the cache after mutation
     res.status(200).json(cart);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -91,6 +132,7 @@ router.put('/update', authenticate, async (req, res) => {
 
     item.quantity = quantity;
     await cart.save();
+    await invalidateCartCache(userId); // Bust the cache after mutation
     res.json(cart);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -109,6 +151,7 @@ router.delete('/remove', authenticate, async (req, res) => {
 
     cart.items = cart.items.filter(i => i.product.toString() !== productId);
     await cart.save();
+    await invalidateCartCache(userId); // Bust the cache after mutation
     res.json(cart);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -118,11 +161,13 @@ router.delete('/remove', authenticate, async (req, res) => {
 // DELETE /api/cart/clear/:userId — wipe the entire cart (after order placement)
 router.delete('/clear/:userId', authenticate, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.user.id });
+    const userId = req.user.id;
+    const cart = await Cart.findOne({ user: userId });
     if (!cart) return res.status(404).json({ error: 'Cart not found' });
 
     cart.items = [];
     await cart.save();
+    await invalidateCartCache(userId); // Bust the cache after mutation
     res.json({ message: 'Cart cleared' });
   } catch (err) {
     res.status(500).json({ error: err.message });
