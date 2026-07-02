@@ -47,6 +47,8 @@ const orderRoutes = require('./routes/orders');
 app.use('/api/orders', orderRoutes);
 const chatbotRoutes = require('./routes/chatbot');
 app.use('/api/chatbot', chatbotRoutes);
+const paymentRoutes = require('./routes/payment');
+app.use('/api/payment', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.json({
