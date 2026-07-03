@@ -67,24 +67,61 @@ function Cart() {
   };
 
   const handleCheckout = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    setCheckingOut(true);
-    setError('');
-    try {
-      const items = cartItems.map(item => ({ productId: item._id, quantity: item.quantity }));
-      await apiClient.post('/cart/checkout', { items });
-      localStorage.removeItem('cart');
-      setCartItems([]);
-      navigate('/orders');
-    } catch (err) {
-      setError(err.response?.data?.error || 'Checkout failed');
-    }
-    setCheckingOut(false);
-  };
+  const token = localStorage.getItem('token');
+  if (!token) {
+    navigate('/login');
+    return;
+  }
+  setCheckingOut(true);
+  setError('');
+  try {
+    // Step 1 — create Razorpay order
+    const { data } = await apiClient.post('/payment/create-order', {
+      amount: total?.finalTotal || 0,
+    });
+
+    // Step 2 — open Razorpay popup
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: data.amount,
+      currency: data.currency,
+      name: 'ShopAI',
+      description: 'Order Payment',
+      order_id: data.orderId,
+      handler: async (response) => {
+        try {
+          // Step 3 — verify payment
+          await apiClient.post('/payment/verify', response);
+
+          // Step 4 — place order
+          const items = cartItems.map(item => ({
+            productId: item._id,
+            quantity: item.quantity,
+          }));
+          await apiClient.post('/cart/checkout', { items });
+
+          localStorage.removeItem('cart');
+          setCartItems([]);
+          navigate('/orders');
+        } catch {
+          setError('Payment verified but order failed. Contact support.');
+        }
+      },
+      prefill: {
+        name: JSON.parse(localStorage.getItem('user') || '{}').name || '',
+        email: JSON.parse(localStorage.getItem('user') || '{}').email || '',
+      },
+      theme: { color: '#1a1a1a' },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.on('payment.failed', () => setError('Payment failed. Please try again.'));
+    rzp.open();
+  } catch (err) {
+    setError(err.response?.data?.error || 'Checkout failed');
+  }
+  setCheckingOut(false);
+};
 
   if (cartItems.length === 0) {
     return (
