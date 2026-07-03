@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/order');
 const Product = require('../models/product');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requireRole } = require('../middleware/auth');
+const { notifyUser } = require('./notifications');
 
 // POST /api/orders — place an order
 router.post('/', authenticate, async (req, res) => {
@@ -87,6 +88,87 @@ router.patch('/:id/cancel', authenticate, async (req, res) => {
     order.status = 'cancelled';
     await order.save();
     res.json({ message: 'Order cancelled', order });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Admin Routes ────────────────────────────────────────────────────────────
+
+/**
+ * PATCH /api/orders/:id/status
+ * Admin-only: update the status of any order.
+ * Also pushes a real-time SSE notification to the order's owner.
+ *
+ * Body: { status: 'confirmed' | 'shipped' | 'delivered' | 'cancelled' }
+ */
+const VALID_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+
+router.patch('/:id/status', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!VALID_STATUSES.includes(status)) {
+      return res.status(400).json({
+        error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}`
+      });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    const previousStatus = order.status;
+    order.status = status;
+    await order.save();
+
+    // Push real-time notification to the buyer (fire-and-forget)
+    try {
+      notifyUser(String(order.user), 'order_update', {
+        orderId: order._id,
+        previousStatus,
+        status,
+        message: `Your order #${String(order._id).slice(-8).toUpperCase()} has been ${status}.`,
+        updatedAt: new Date().toISOString()
+      });
+    } catch (notifyErr) {
+      console.warn('[SSE] Failed to notify user:', notifyErr.message);
+    }
+
+    res.json({
+      message: `Order status updated to "${status}"`,
+      order
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/orders/admin/all
+ * Admin-only: list all orders with pagination, optional status filter.
+ * Query: ?status=pending&page=1&limit=20
+ */
+router.get('/admin/all', authenticate, requireRole('admin'), async (req, res) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    const filter = status ? { status } : {};
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [orders, total] = await Promise.all([
+      Order.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .populate('user', 'name email')
+        .populate('items.product', 'name price'),
+      Order.countDocuments(filter)
+    ]);
+
+    res.json({
+      total,
+      page: Number(page),
+      pages: Math.ceil(total / Number(limit)),
+      orders
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

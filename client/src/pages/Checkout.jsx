@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MapPin, CheckCircle, Loader2, ArrowLeft, CreditCard, Package } from 'lucide-react';
+import CouponInput from '../components/CouponInput';
 
 export default function Checkout({
   cart,
@@ -11,6 +12,11 @@ export default function Checkout({
   onGoToProducts
 }) {
   const formatPrice = (price) => `₹${Math.round(price * 83).toLocaleString('en-IN')}`;
+
+  // ── Coupon state (local to Checkout) ──────────────────────────────────────
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const finalTotal = cart.total - discountAmount;
 
   return (
     <div className="animate-fade-in">
@@ -177,19 +183,35 @@ export default function Checkout({
               ))}
             </div>
 
-            <hr className="divider" style={{ margin: '16px 0 14px' }} />
+            {/* Coupon Widget */}
+            <div style={{ margin: '16px 0' }}>
+              <CouponInput
+                orderTotal={cart.total}
+                appliedCoupon={appliedCoupon}
+                onApply={setAppliedCoupon}
+                onRemove={() => setAppliedCoupon(null)}
+              />
+            </div>
+
+            <hr className="divider" style={{ margin: '4px 0 14px' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                 <span>Subtotal</span><span>{formatPrice(cart.total)}</span>
               </div>
+              {appliedCoupon && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--brand-green)', fontWeight: 600 }}>
+                  <span>🎟️ Coupon ({appliedCoupon.code})</span>
+                  <span>−{formatPrice(discountAmount)}</span>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                 <span>Shipping</span>
                 <span style={{ color: 'var(--brand-green)', fontWeight: 600 }}>Free</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: 4 }}>
                 <span>Total</span>
-                <span style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(cart.total)}</span>
+                <span style={{ fontFamily: 'var(--font-display)' }}>{formatPrice(finalTotal)}</span>
               </div>
             </div>
           </div>

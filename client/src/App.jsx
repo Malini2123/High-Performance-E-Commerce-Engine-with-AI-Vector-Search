@@ -7,8 +7,9 @@ import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
+import Profile from './pages/Profile';
 import confetti from 'canvas-confetti';
-import { apiFetch, getStoredUser, clearSession } from './utils/api';
+import { apiFetch, getStoredUser, clearSession, saveSession } from './utils/api';
 
 export default function App() {
   // ── Auth state ───────────────────────────────────────────────────────────────
@@ -64,6 +65,11 @@ export default function App() {
     setOrders([]);
     setActiveTab('products');
     showToast('Logged out successfully', 'info');
+  };
+
+  // Called by Profile page after a successful name/password update
+  const handleUserUpdated = (updatedUser) => {
+    setCurrentUser(updatedUser);
   };
 
   // ── Data fetching ─────────────────────────────────────────────────────────────
@@ -465,6 +471,15 @@ export default function App() {
             processingAction={processingAction}
             handleCancelOrder={handleCancelOrder}
             onStartShopping={() => setActiveTab('products')}
+          />
+        )}
+
+        {activeTab === 'profile' && currentUser && (
+          <Profile
+            currentUser={currentUser}
+            orders={orders}
+            onUserUpdated={handleUserUpdated}
+            showToast={showToast}
           />
         )}
       </main>

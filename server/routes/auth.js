@@ -69,4 +69,38 @@ router.get('/me', authenticate, (req, res) => {
   res.json({ user: req.user });
 });
 
+// PATCH /api/auth/profile — update name and/or password
+router.patch('/profile', authenticate, async (req, res) => {
+  try {
+    const { name, currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    if (name && name.trim()) {
+      user.name = name.trim();
+    }
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: 'currentPassword is required to set a new password.' });
+      }
+      const valid = await user.comparePassword(currentPassword);
+      if (!valid) {
+        return res.status(401).json({ error: 'Current password is incorrect.' });
+      }
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+      }
+      user.password = newPassword; // will be hashed by pre-save hook
+    }
+
+    await user.save();
+    const token = signToken(user); // issue fresh token with updated name
+    res.json({ message: 'Profile updated.', token, user: user.toSafeObject() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 module.exports = router;

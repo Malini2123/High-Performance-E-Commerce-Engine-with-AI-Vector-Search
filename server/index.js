@@ -47,6 +47,12 @@ const orderRoutes = require('./routes/orders');
 app.use('/api/orders', orderRoutes);
 const chatbotRoutes = require('./routes/chatbot');
 app.use('/api/chatbot', chatbotRoutes);
+const couponRoutes = require('./routes/coupons');
+app.use('/api/coupons', couponRoutes);
+const statsRoutes = require('./routes/stats');
+app.use('/api/stats', statsRoutes);
+const { router: notificationRoutes } = require('./routes/notifications');
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/', (req, res) => {
   res.json({

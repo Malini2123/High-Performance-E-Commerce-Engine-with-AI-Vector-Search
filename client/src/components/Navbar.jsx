@@ -1,5 +1,5 @@
-import React from 'react';
-import { Package, ShoppingCart, Heart, ClipboardList, Zap, Search, LogIn, LogOut, UserCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Package, ShoppingCart, Heart, ClipboardList, Zap, Search, LogIn, LogOut, UserCircle, User } from 'lucide-react';
 
 /**
  * Navbar
@@ -24,11 +24,26 @@ export default function Navbar({
   onLogin,
   onLogout,
 }) {
+  // ── Dark mode ──────────────────────────────────────────────────────────────
+  const [dark, setDark] = useState(() => {
+    return localStorage.getItem('shopai_theme') === 'dark';
+  });
+
+  useEffect(() => {
+    if (dark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('shopai_theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('shopai_theme', 'light');
+    }
+  }, [dark]);
+
   const navItems = [
     { id: 'products', label: 'Products', icon: Package },
     { id: 'search',   label: 'Search',   icon: Search },
-    { id: 'cart',     label: 'Cart',     icon: ShoppingCart, count: cartItemCount,      badgeClass: '' },
-    { id: 'wishlist', label: 'Wishlist', icon: Heart,        count: wishlistCount,      badgeClass: 'nav-badge-rose' },
+    { id: 'cart',     label: 'Cart',     icon: ShoppingCart,  count: cartItemCount,      badgeClass: '' },
+    { id: 'wishlist', label: 'Wishlist', icon: Heart,         count: wishlistCount,      badgeClass: 'nav-badge-rose' },
     { id: 'orders',   label: 'Orders',   icon: ClipboardList, count: pendingOrdersCount, badgeClass: 'nav-badge-amber' },
   ];
 
@@ -63,10 +78,35 @@ export default function Navbar({
           ))}
         </nav>
 
-        {/* ── Auth controls ── */}
-        <div className="navbar-auth">
+        {/* ── Auth + Dark Mode controls ── */}
+        <div className="navbar-auth" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+
+          {/* Dark Mode Toggle */}
+          <button
+            id="theme-toggle-btn"
+            className="theme-toggle"
+            onClick={() => setDark(d => !d)}
+            title={dark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle dark mode"
+          >
+            <span className="toggle-icon">{dark ? '☀️' : '🌙'}</span>
+            <span>{dark ? 'Light' : 'Dark'}</span>
+          </button>
+
           {currentUser ? (
             <div className="navbar-user">
+              {/* Profile link */}
+              <button
+                id="navbar-profile-btn"
+                className={`nav-link${activeTab === 'profile' ? ' active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+                title="My Profile"
+                style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+              >
+                <User size={15} />
+                Profile
+              </button>
+
               <UserCircle size={16} color="rgba(255,255,255,0.7)" />
               <span className="navbar-username" title={currentUser.email}>
                 {currentUser.name}

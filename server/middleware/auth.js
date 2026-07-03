@@ -47,4 +47,7 @@ const requireRole = (...roles) => (req, res, next) => {
   next();
 };
 
-module.exports = { authenticate, requireRole };
+// Convenience shorthand — same as requireRole('admin')
+const requireAdmin = requireRole('admin');
+
+module.exports = { authenticate, requireRole, requireAdmin };
