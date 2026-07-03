@@ -15,9 +15,9 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     role: {
-        type: String,
-        enum: ['user', 'admin'],
-        default: 'user'
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
     },
     verified: {
         type: Boolean,
@@ -26,4 +26,7 @@ const userSchema = new mongoose.Schema({
 
 
 });
+
+
+
 module.exports = mongoose.model("User", userSchema);
