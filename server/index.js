@@ -8,6 +8,7 @@ const connectDB = require('./config/db');
 const { connectRedis } = require('./config/redis');
 
 const app = express();
+app.set('trust proxy', 1); // Fix for Render deployment
 
 connectDB();
 connectRedis();
