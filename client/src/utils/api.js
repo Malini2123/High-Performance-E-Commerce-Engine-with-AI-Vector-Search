@@ -22,7 +22,7 @@ export const getStoredUser = () => {
     return null;
   }
 };
-
+          
 export const saveSession = (token, user) => {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
