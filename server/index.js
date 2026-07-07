@@ -50,6 +50,8 @@ const chatbotRoutes = require('./routes/chatbot');
 app.use('/api/chatbot', chatbotRoutes);
 const paymentRoutes = require('./routes/payment');
 app.use('/api/payment', paymentRoutes);
+const analyticsRoutes = require('./routes/analytics');
+app.use('/api/analytics', analyticsRoutes);
 
 app.get('/', (req, res) => {
   res.json({
