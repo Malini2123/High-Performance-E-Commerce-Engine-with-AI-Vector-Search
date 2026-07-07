@@ -229,6 +229,65 @@ export default function App() {
     }
   };
 
+  // Move a cart item to the wishlist (Save for Later)
+  const handleSaveForLater = async (productId) => {
+    if (!requireAuth()) return;
+    setProcessingAction(true);
+    try {
+      // Add to wishlist
+      const wishRes = await apiFetch('/api/wishlist/add', {
+        method: 'POST',
+        body: JSON.stringify({ productId }),
+      });
+      if (!wishRes.ok) {
+        const d = await wishRes.json();
+        showToast(d.error || 'Failed to save to wishlist', 'error');
+        setProcessingAction(false);
+        return;
+      }
+      // Remove from cart
+      const cartRes = await apiFetch('/api/cart/remove', {
+        method: 'DELETE',
+        body: JSON.stringify({ productId }),
+      });
+      if (cartRes.ok) {
+        showToast('Saved for later — moved to Wishlist 🔖');
+        fetchCart();
+        fetchWishlist();
+      } else {
+        showToast('Added to Wishlist, but could not remove from Cart', 'warning');
+        fetchWishlist();
+      }
+    } catch (err) {
+      showToast('API Connection Error', 'error');
+    } finally {
+      setProcessingAction(false);
+    }
+  };
+
+  // Clear all items from the cart one by one
+  const handleClearCart = async () => {
+    if (!requireAuth()) return;
+    setProcessingAction(true);
+    try {
+      const items = cart.items || [];
+      await Promise.all(
+        items.map(item =>
+          apiFetch('/api/cart/remove', {
+            method: 'DELETE',
+            body: JSON.stringify({ productId: (item.product || {})._id }),
+          })
+        )
+      );
+      showToast('Cart cleared', 'info');
+      fetchCart();
+    } catch (err) {
+      showToast('Failed to clear cart', 'error');
+    } finally {
+      setProcessingAction(false);
+    }
+  };
+
   // ── Wishlist actions ──────────────────────────────────────────────────────────
 
   const handleToggleWishlist = async (productId) => {
@@ -436,6 +495,8 @@ export default function App() {
             cartItemCount={cartItemCount}
             handleUpdateCartQuantity={handleUpdateCartQuantity}
             handleRemoveFromCart={handleRemoveFromCart}
+            handleSaveForLater={handleSaveForLater}
+            handleClearCart={handleClearCart}
             onProceedToCheckout={() => setActiveTab('checkout')}
             onContinueShopping={() => setActiveTab('products')}
           />
