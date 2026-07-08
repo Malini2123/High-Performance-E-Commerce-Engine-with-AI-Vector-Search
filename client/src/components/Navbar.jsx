@@ -21,6 +21,7 @@ function Navbar() {
           <Link to="/cart" style={styles.link}>🛒 Cart</Link>
           <Link to="/wishlist" style={styles.link}>❤️ Wishlist</Link>
           <Link to="/orders" style={styles.link}>📦 Orders</Link>
+          <Link to="/analytics" style={styles.link}>📊 Analytics</Link>
 
           {user ? (
             <>

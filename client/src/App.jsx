@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Orders from './pages/Orders';
+import Analytics from './pages/Analytics';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/analytics" element={<Analytics />} />
       </Routes>
     </>
   );
