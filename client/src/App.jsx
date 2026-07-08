@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
@@ -37,6 +37,19 @@ export default function App() {
     state: 'Karnataka',
     pincode: '560001'
   });
+
+  // Scroll-to-top visibility
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 300);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   // Toast notifications
   const [toasts, setToasts] = useState([]);
@@ -572,6 +585,36 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Scroll-to-top floating button */}
+      <button
+        onClick={scrollToTop}
+        title="Back to top"
+        style={{
+          position: 'fixed',
+          bottom: 28,
+          right: 28,
+          width: 44,
+          height: 44,
+          borderRadius: '50%',
+          border: 'none',
+          cursor: 'pointer',
+          background: 'linear-gradient(135deg, #0ea5e9, #7c3aed)',
+          color: '#fff',
+          fontSize: '1.1rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 14px rgba(14,165,233,0.35)',
+          opacity: showScrollTop ? 1 : 0,
+          transform: showScrollTop ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.85)',
+          pointerEvents: showScrollTop ? 'auto' : 'none',
+          transition: 'opacity 0.25s ease, transform 0.25s ease',
+          zIndex: 999,
+        }}
+      >
+        ↑
+      </button>
     </div>
   );
 }
