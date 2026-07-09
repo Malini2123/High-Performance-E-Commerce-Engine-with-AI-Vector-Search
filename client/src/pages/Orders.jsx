@@ -87,7 +87,7 @@ function Orders() {
 
   return (
     <AnimatedPage>
-      <div style={styles.container}>
+      <div style={styles.container} className="orders-container">
         <h1 style={styles.title}>Your Orders</h1>
         <p style={styles.subtitle}>{orders.length} order{orders.length !== 1 ? 's' : ''} placed</p>
 

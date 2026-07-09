@@ -364,10 +364,14 @@ function Home() {
               <div style={{ position: 'absolute', top: '-60px', right: '15%', width: 350, height: 350, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,0.15) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', bottom: '-80px', left: '10%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(74,222,128,0.12) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
 
-              <div style={{ maxWidth: 1200, width: '100%', margin: '0 auto', padding: '0 40px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 48, position: 'relative', zIndex: 1 }}>
+              <div 
+                className="hero-inner-container"
+                style={{ maxWidth: 1200, width: '100%', margin: '0 auto', padding: '0 40px', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 48, position: 'relative', zIndex: 1 }}
+              >
 
                 {/* LEFT — Text Content */}
                 <motion.div
+                  className="hero-left-col"
                   style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}
                   initial={{ opacity: 0, x: -40 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -413,7 +417,10 @@ function Home() {
                 </motion.div>
 
                 {/* RIGHT — Product Showcase Staggered Layout */}
-                <div style={{ flex: 1.2, minWidth: 0, display: 'flex', gap: 16, alignItems: 'center', height: 380, padding: '20px 0' }}>
+                <div 
+                  className="hero-right-col"
+                  style={{ flex: 1.2, minWidth: 0, display: 'flex', gap: 16, alignItems: 'center', height: 380, padding: '20px 0' }}
+                >
                   {[
                     { img: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=300&h=450&fit=crop&q=80', label: 'Sport Shoes', price: '₹2,499', badge: '15% OFF', offset: -25 },
                     { img: 'https://images.unsplash.com/photo-1617897903246-719242758050?w=300&h=450&fit=crop&q=80', label: 'Organic Serum', price: '₹849', badge: '30% OFF', offset: 25 },

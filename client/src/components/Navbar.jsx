@@ -17,6 +17,7 @@ function Navbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const updateCartCount = () => {
     try {
@@ -130,14 +131,17 @@ function Navbar() {
 
   return (
     <div style={styles.navWrapper}>
-      <nav style={{
-        ...styles.nav,
-        boxShadow: isScrolled ? '0 10px 30px rgba(11,47,29,0.06)' : 'none',
-        borderBottomColor: isScrolled ? 'rgba(220,232,224,0.4)' : 'var(--border)',
-        paddingTop: isScrolled ? '10px' : '14px',
-        paddingBottom: isScrolled ? '10px' : '14px',
-      }}>
-        <div style={styles.container}>
+      <nav 
+        className="nav-bar-container"
+        style={{
+          ...styles.nav,
+          boxShadow: isScrolled ? '0 10px 30px rgba(11,47,29,0.06)' : 'none',
+          borderBottomColor: isScrolled ? 'rgba(220,232,224,0.4)' : 'var(--border)',
+          paddingTop: isScrolled ? '10px' : '14px',
+          paddingBottom: isScrolled ? '10px' : '14px',
+        }}
+      >
+        <div style={styles.container} className="nav-inner-container">
           <Link to="/" style={styles.logo}>
             <img 
               src="/zapcart_logo.png" 
@@ -148,12 +152,15 @@ function Navbar() {
           </Link>
 
           {/* Search Bar - expands on focus */}
-          <div style={{
-            ...styles.searchBar,
-            borderColor: searchFocused ? 'var(--secondary)' : 'var(--border)',
-            boxShadow: searchFocused ? '0 0 0 3px rgba(22, 163, 74, 0.12)' : 'inset 0 1px 2px rgba(11,47,29,0.03)',
-            maxWidth: searchFocused ? '720px' : '580px',
-          }}>
+          <div 
+            className="nav-search-bar"
+            style={{
+              ...styles.searchBar,
+              borderColor: searchFocused ? 'var(--secondary)' : 'var(--border)',
+              boxShadow: searchFocused ? '0 0 0 3px rgba(22, 163, 74, 0.12)' : 'inset 0 1px 2px rgba(11,47,29,0.03)',
+              maxWidth: searchFocused ? '720px' : '580px',
+            }}
+          >
             <span style={styles.searchIcon}>🔍</span>
             <input
               type="text"
@@ -183,7 +190,7 @@ function Navbar() {
             </button>
           </div>
 
-          <div style={styles.links}>
+          <div style={styles.links} className="nav-desktop-links">
             <Link to="/" className="nav-link">Products</Link>
             <button
               onClick={() => setIsDrawerOpen(true)}
@@ -262,7 +269,80 @@ function Navbar() {
               <Link to="/login" style={styles.loginBtn}>Login</Link>
             )}
           </div>
+
+          {/* Hamburger toggle button (visible on mobile/tablet only) */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="nav-mobile-toggle"
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '24px',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px',
+            }}
+          >
+            {isMobileMenuOpen ? '✕' : '☰'}
+          </button>
         </div>
+
+        {/* Mobile menu overlay */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="mobile-menu-overlay"
+              style={{
+                background: '#fff',
+                borderTop: '1px solid var(--border)',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                padding: '16px 24px',
+                overflow: 'hidden',
+              }}
+            >
+              <Link to="/" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>🛍️ Products</Link>
+              
+              <button
+                onClick={() => { setIsDrawerOpen(true); setIsMobileMenuOpen(false); }}
+                className="nav-link"
+                style={{ ...styles.navButton, textAlign: 'left', width: '100%' }}
+              >
+                🛒 Cart {cartCount > 0 && <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '12px', padding: '1px 6px', fontSize: '10px', fontWeight: 800, marginLeft: '5px' }}>{cartCount}</span>}
+              </button>
+              
+              <Link to="/wishlist" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>❤️ Wishlist {wishlistCount > 0 && <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '12px', padding: '1px 6px', fontSize: '10px', fontWeight: 800, marginLeft: '5px' }}>{wishlistCount}</span>}</Link>
+              <Link to="/orders" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>📦 Orders</Link>
+              <Link to="/analytics" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>📈 Analytics</Link>
+
+              <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
+
+              {user ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ ...styles.avatar, width: '28px', height: '28px', fontSize: '12px' }}>
+                      {user.name ? user.name[0].toUpperCase() : 'U'}
+                    </div>
+                    {user.name}
+                  </div>
+                  <button onClick={handleLogout} style={{ ...styles.dropdownItem, padding: '8px 0', color: 'var(--danger)' }} className="dropdown-item-hover">
+                    🚪 Logout
+                  </button>
+                </div>
+              ) : (
+                <Link to="/login" style={{ ...styles.loginBtn, alignSelf: 'flex-start', textAlign: 'center' }} onClick={() => setIsMobileMenuOpen(false)}>Login</Link>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
       <CartDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
     </div>

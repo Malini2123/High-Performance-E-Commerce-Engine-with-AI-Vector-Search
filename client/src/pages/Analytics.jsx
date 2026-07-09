@@ -65,7 +65,7 @@ function Analytics() {
 
   return (
     <AnimatedPage>
-      <div style={styles.container}>
+      <div style={styles.container} className="analytics-container">
         <h1 style={styles.title}>📊 Analytics Dashboard</h1>
 
         <motion.div

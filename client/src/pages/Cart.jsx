@@ -177,15 +177,15 @@ function Cart() {
 
   return (
     <AnimatedPage>
-      <div style={styles.container}>
+      <div style={styles.container} className="cart-container">
         <h1 style={styles.title}>Your Cart</h1>
 
         {error && <div style={styles.error}>{error}</div>}
 
-        <div style={styles.layout}>
+        <div style={styles.layout} className="cart-layout">
           <div style={styles.itemsList}>
             {cartItems.map(item => (
-              <div key={item._id} style={styles.cartItem}>
+              <div key={item._id} style={styles.cartItem} className="cart-item-row">
                 <img
                   src={getImageUrl(item)}
                   alt={item.name}

@@ -120,7 +120,7 @@ function ProductDetail() {
 
   return (
     <AnimatedPage>
-      <div style={styles.container}>
+      <div style={styles.container} className="product-detail-container">
         <motion.button
           onClick={() => navigate(-1)}
           style={styles.back}
@@ -130,7 +130,7 @@ function ProductDetail() {
           ← Back
         </motion.button>
 
-        <div style={styles.productRow}>
+        <div style={styles.productRow} className="product-detail-row">
           <motion.div
             style={styles.imageBox}
             initial={{ opacity: 0, scale: 0.96 }}
@@ -186,7 +186,7 @@ function ProductDetail() {
           </div>
           
           {/* Policies Badge */}
-          <div style={styles.policyCard}>
+          <div style={styles.policyCard} className="product-policy-card">
             <div style={styles.policyItem}>
               <span style={styles.policyIcon}>🚚</span>
               <div style={styles.policyDetails}>

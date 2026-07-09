@@ -302,3 +302,158 @@ input:focus, select:focus, textarea:focus {
   background-color: var(--bg-secondary) !important;
   color: var(--secondary) !important;
 }
+
+/* ==========================================================================
+   RESPONSIVE STYLING & MEDIA QUERIES (Tombstone Responsiveness Layer)
+   ========================================================================== */
+
+/* Defaults / Reset helper for mobile toggle button */
+.nav-mobile-toggle {
+  display: none !important;
+}
+
+/* TABLET & MOBILE DEVICES (<= 991px) */
+@media (max-width: 991px) {
+  /* Navbar */
+  .nav-bar-container {
+    padding: 0 16px !important;
+  }
+  .nav-inner-container {
+    height: auto !important;
+    padding: 8px 0 !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .nav-search-bar {
+    order: 3 !important;
+    flex: 1 1 100% !important;
+    margin: 4px 0 0 0 !important;
+    max-width: 100% !important;
+  }
+  .nav-desktop-links {
+    display: none !important;
+  }
+  .nav-mobile-toggle {
+    display: flex !important;
+  }
+
+  /* Hero Section Stacking */
+  .hero-inner-container {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 40px !important;
+    padding: 0 20px !important;
+  }
+  .hero-left-col {
+    align-items: center !important;
+    text-align: center !important;
+    max-width: 100% !important;
+    flex: none !important;
+    width: 100% !important;
+  }
+  .hero-left-col h1 {
+    font-size: 38px !important;
+    text-align: center !important;
+  }
+  .hero-left-col p {
+    text-align: center !important;
+    margin: 0 auto 24px auto !important;
+  }
+  .hero-left-col div {
+    justify-content: center !important;
+  }
+  .hero-right-col {
+    flex: none !important;
+    width: 100% !important;
+    max-width: 480px !important;
+    height: auto !important;
+    justify-content: center !important;
+    margin-top: 10px;
+    padding: 10px 0 !important;
+  }
+}
+
+/* MOBILE LANDSCAPE & PORTRAIT (<= 768px) */
+@media (max-width: 768px) {
+  /* Page Containers scaling */
+  .cart-container,
+  .wishlist-container,
+  .orders-container,
+  .analytics-container,
+  .product-detail-container {
+    padding: 20px 16px !important;
+  }
+  
+  .cart-container h1,
+  .wishlist-container h1,
+  .orders-container h1,
+  .analytics-container h1,
+  .product-detail-container h1 {
+    font-size: 24px !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* Product Details layout */
+  .product-detail-row {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  .product-detail-row > div:first-child {
+    height: 320px !important;
+  }
+  .product-policy-card {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* Cart Layout Stacking */
+  .cart-layout {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  .cart-item-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 16px !important;
+    position: relative !important;
+  }
+  .cart-item-row img,
+  .cart-item-row .cart-fallback {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  .cart-item-row button:last-child {
+    position: absolute !important;
+    top: 12px !important;
+    right: 12px !important;
+  }
+  .cart-item-row div {
+    width: 100% !important;
+  }
+  .cart-item-row div:nth-child(4) {
+    /* Quantity controls */
+    justify-content: flex-start !important;
+    margin-top: 4px !important;
+  }
+  .cart-item-row div:nth-child(5) {
+    /* Subtotal */
+    text-align: left !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+  }
+}
+
+/* MINI SMARTPHONES (<= 480px) */
+@media (max-width: 480px) {
+  .hero-left-col h1 {
+    font-size: 32px !important;
+  }
+  .hero-right-col {
+    height: 290px !important;
+    gap: 10px !important;
+  }
+  .hero-right-col > div {
+    height: 200px !important;
+  }
+}

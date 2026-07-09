@@ -94,7 +94,7 @@ function Wishlist() {
 
   return (
     <AnimatedPage>
-      <div style={styles.container}>
+      <div style={styles.container} className="wishlist-container">
         <div style={styles.header}>
           <div>
             <h1 style={styles.title}>Your Wishlist</h1>
