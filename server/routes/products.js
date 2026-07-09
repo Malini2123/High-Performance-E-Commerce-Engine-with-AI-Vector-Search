@@ -87,6 +87,23 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// GET /api/products/:id/similar — similar products
+router.get('/:id/similar', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+    const similar = await Product.find({
+      _id: { $ne: product._id },
+      category: product.category
+    }).limit(4).select('-embedding');
+
+    res.json({ success: true, similar });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
 // POST /api/products — create product
 router.post('/', async (req, res) => {
   try {

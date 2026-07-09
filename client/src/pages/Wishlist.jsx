@@ -2,12 +2,18 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import ProductCard from '../components/ProductCard';
+import useScrollRestore from '../hooks/useScrollRestore';
+import AnimatedPage from '../components/AnimatedPage';
+import { motion } from 'framer-motion';
 
 function Wishlist() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Restore scroll position on page refresh
+  useScrollRestore(loading);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -24,7 +30,8 @@ function Wishlist() {
       try {
         const res = await apiClient.get('/wishlist');
         if (!ignore) {
-          setItems(res.data.items || res.data || []);
+          const list = res.data.wishlist || res.data.items || (Array.isArray(res.data) ? res.data : []);
+          setItems(list);
         }
       } catch {
         if (!ignore) {
@@ -61,7 +68,7 @@ function Wishlist() {
       cart.push({ ...product, quantity: 1 });
     }
     localStorage.setItem('cart', JSON.stringify(cart));
-    alert(`${product.name} added to cart!`);
+    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { openDrawer: true } }));
   };
 
   if (loading) {
@@ -74,79 +81,87 @@ function Wishlist() {
 
   if (items.length === 0) {
     return (
-      <div style={styles.emptyContainer}>
-        <div style={styles.emptyIcon}>❤️</div>
-        <h2 style={styles.emptyTitle}>Your wishlist is empty</h2>
-        <p style={styles.emptyText}>Save products you love for later</p>
-        <Link to="/" style={styles.shopBtn}>Browse Products</Link>
-      </div>
+      <AnimatedPage>
+        <div style={styles.emptyContainer}>
+          <div style={styles.emptyIcon}>❤️</div>
+          <h2 style={styles.emptyTitle}>Your wishlist is empty</h2>
+          <p style={styles.emptyText}>Save products you love for later</p>
+          <Link to="/" style={styles.shopBtn}>Browse Products</Link>
+        </div>
+      </AnimatedPage>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Your Wishlist</h1>
-          <p style={styles.subtitle}>{items.length} item{items.length !== 1 ? 's' : ''} saved</p>
+    <AnimatedPage>
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Your Wishlist</h1>
+            <p style={styles.subtitle}>{items.length} item{items.length !== 1 ? 's' : ''} saved</p>
+          </div>
+        </div>
+
+        {error && <div style={styles.error}>{error}</div>}
+
+        <div style={styles.grid}>
+          {items.map(product => (
+            <div key={product._id} style={styles.cardWrapper}>
+              <ProductCard product={product} />
+              <div style={styles.actions}>
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={styles.cartBtn} onClick={() => addToCart(product)}>
+                  🛒 Add to Cart
+                </motion.button>
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={styles.removeBtn} onClick={() => removeFromWishlist(product._id)}>
+                  ✕ Remove
+                </motion.button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-
-      {error && <div style={styles.error}>{error}</div>}
-
-      <div style={styles.grid}>
-        {items.map(product => (
-          <div key={product._id} style={styles.cardWrapper}>
-            <ProductCard product={product} />
-            <div style={styles.actions}>
-              <button style={styles.cartBtn} onClick={() => addToCart(product)}>
-                🛒 Add to Cart
-              </button>
-              <button style={styles.removeBtn} onClick={() => removeFromWishlist(product._id)}>
-                ✕ Remove
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    </AnimatedPage>
   );
 }
 
 const styles = {
-  container: { maxWidth: '1200px', margin: '0 auto', padding: '32px 20px' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' },
-  title: { fontSize: '28px', fontWeight: 700, margin: '0 0 4px' },
-  subtitle: { color: '#888', fontSize: '14px', margin: 0 },
+  container: { maxWidth: '1200px', margin: '0 auto', padding: '40px 20px', animation: 'fadeIn 0.5s ease-out' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' },
+  title: { fontSize: '28px', fontWeight: 800, margin: '0 0 6px', color: 'var(--text-primary)', letterSpacing: '-0.02em' },
+  subtitle: { color: 'var(--text-secondary)', fontSize: '14px', margin: 0, fontWeight: 500 },
   error: {
-    background: '#fff0f0', border: '1px solid #ffcccc', color: '#cc0000',
+    background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444',
     padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '14px',
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-    gap: '20px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
+    gap: '24px',
   },
-  cardWrapper: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  actions: { display: 'flex', gap: '8px' },
+  cardWrapper: { display: 'flex', flexDirection: 'column', gap: '10px' },
+  actions: { display: 'flex', gap: '10px' },
   cartBtn: {
-    flex: 1, padding: '10px', background: '#1a1a1a', color: '#fff',
-    border: 'none', borderRadius: '8px', fontSize: '13px',
-    fontWeight: 600, cursor: 'pointer',
+    flex: 1, padding: '12px',
+    background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%)',
+    color: '#fff',
+    border: 'none', borderRadius: '10px', fontSize: '13px',
+    fontWeight: 700, cursor: 'pointer', boxShadow: 'var(--shadow-sm)', transition: 'all 0.2s',
   },
   removeBtn: {
-    padding: '10px 14px', background: '#fff', border: '1px solid #ddd',
-    borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-    color: '#cc0000', cursor: 'pointer',
+    padding: '12px 16px', background: 'var(--card-bg)', border: '1px solid var(--border)',
+    borderRadius: '10px', fontSize: '13px', fontWeight: 600,
+    color: '#ef4444', cursor: 'pointer', transition: 'all 0.2s',
   },
-  centerBox: { textAlign: 'center', padding: '100px 20px' },
-  emptyContainer: { textAlign: 'center', padding: '100px 20px' },
-  emptyIcon: { fontSize: '64px', marginBottom: '16px' },
-  emptyTitle: { fontSize: '22px', fontWeight: 700, margin: '0 0 8px' },
-  emptyText: { color: '#888', marginBottom: '24px' },
+  centerBox: { textAlign: 'center', padding: '120px 20px', color: 'var(--text-secondary)' },
+  emptyContainer: { textAlign: 'center', padding: '120px 20px', animation: 'fadeIn 0.5s ease-out' },
+  emptyIcon: { fontSize: '72px', marginBottom: '20px' },
+  emptyTitle: { fontSize: '24px', fontWeight: 800, margin: '0 0 10px', color: 'var(--text-primary)', letterSpacing: '-0.02em' },
+  emptyText: { color: 'var(--text-muted)', marginBottom: '28px', fontSize: '15px' },
   shopBtn: {
-    display: 'inline-block', padding: '12px 28px', background: '#1a1a1a',
-    color: '#fff', textDecoration: 'none', borderRadius: '8px', fontWeight: 600,
+    display: 'inline-flex', padding: '12px 32px',
+    background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%)',
+    color: '#fff', textDecoration: 'none', borderRadius: '10px', fontWeight: 700,
+    boxShadow: 'var(--shadow-md)', transition: 'all 0.2s',
   },
 };
 

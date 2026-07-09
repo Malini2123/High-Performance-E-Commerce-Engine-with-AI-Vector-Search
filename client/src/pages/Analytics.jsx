@@ -2,10 +2,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
+import useScrollRestore from '../hooks/useScrollRestore';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
+import AnimatedPage from '../components/AnimatedPage';
+import { motion } from 'framer-motion';
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }
+};
 
 const COLORS = ['#1a1a1a', '#6ee7b7', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -16,6 +32,9 @@ function Analytics() {
   const [topProducts, setTopProducts] = useState([]);
   const [revenueOverTime, setRevenueOverTime] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Restore scroll position after page refresh
+  useScrollRestore(loading);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -45,23 +64,34 @@ function Analytics() {
   if (loading) return <div style={styles.loading}>Loading analytics...</div>;
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>📊 Analytics Dashboard</h1>
+    <AnimatedPage>
+      <div style={styles.container}>
+        <h1 style={styles.title}>📊 Analytics Dashboard</h1>
 
-      <div style={styles.cards}>
-        {[
-          { label: 'Total Revenue', value: `₹${summary?.totalRevenue?.toFixed(2) || 0}`, icon: '💰' },
-          { label: 'Total Orders', value: summary?.totalOrders || 0, icon: '📦' },
-          { label: 'Total Users', value: summary?.totalUsers || 0, icon: '👥' },
-          { label: 'Total Products', value: summary?.totalProducts || 0, icon: '🛍️' },
-        ].map((card, i) => (
-          <div key={i} style={styles.card}>
-            <div style={styles.cardIcon}>{card.icon}</div>
-            <div style={styles.cardValue}>{card.value}</div>
-            <div style={styles.cardLabel}>{card.label}</div>
-          </div>
-        ))}
-      </div>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+          style={styles.cards}
+        >
+          {[
+            { label: 'Total Revenue', value: `₹${summary?.totalRevenue?.toFixed(2) || 0}`, icon: '💰' },
+            { label: 'Total Orders', value: summary?.totalOrders || 0, icon: '📦' },
+            { label: 'Total Users', value: summary?.totalUsers || 0, icon: '👥' },
+            { label: 'Total Products', value: summary?.totalProducts || 0, icon: '🛍️' },
+          ].map((card, i) => (
+            <motion.div
+              key={i}
+              variants={cardVariants}
+              whileHover={{ y: -4, boxShadow: 'var(--shadow-md)' }}
+              style={styles.card}
+            >
+              <div style={styles.cardIcon}>{card.icon}</div>
+              <div style={styles.cardValue}>{card.value}</div>
+              <div style={styles.cardLabel}>{card.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
 
       <div style={styles.chartsGrid}>
         <div style={styles.chartBox}>
@@ -110,23 +140,24 @@ function Analytics() {
           ) : <div style={styles.noData}>No sales data yet</div>}
         </div>
       </div>
-    </div>
+      </div>
+    </AnimatedPage>
   );
 }
 
 const styles = {
-  container: { maxWidth: '1200px', margin: '0 auto', padding: '32px 20px' },
-  title: { fontSize: '28px', fontWeight: 700, marginBottom: '24px' },
-  loading: { textAlign: 'center', padding: '100px 20px', color: '#888' },
-  cards: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' },
-  card: { background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px', padding: '20px', textAlign: 'center' },
+  container: { maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' },
+  title: { fontSize: '28px', fontWeight: 800, marginBottom: '24px', color: 'var(--text-primary)', letterSpacing: '-0.02em' },
+  loading: { textAlign: 'center', padding: '100px 20px', color: 'var(--text-secondary)', fontSize: '15px' },
+  cards: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' },
+  card: { background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px', textAlign: 'center', boxShadow: 'var(--shadow-sm)' },
   cardIcon: { fontSize: '32px', marginBottom: '8px' },
-  cardValue: { fontSize: '24px', fontWeight: 700, marginBottom: '4px' },
-  cardLabel: { fontSize: '13px', color: '#888' },
-  chartsGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },
-  chartBox: { background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px', padding: '20px' },
-  chartTitle: { fontSize: '16px', fontWeight: 600, margin: '0 0 16px' },
-  noData: { textAlign: 'center', padding: '60px', color: '#888', fontSize: '14px' },
+  cardValue: { fontSize: '26px', fontWeight: 800, marginBottom: '4px', color: 'var(--text-primary)' },
+  cardLabel: { fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500 },
+  chartsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '24px' },
+  chartBox: { background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px', boxShadow: 'var(--shadow-md)' },
+  chartTitle: { fontSize: '16px', fontWeight: 700, margin: '0 0 20px', color: 'var(--text-primary)' },
+  noData: { textAlign: 'center', padding: '60px', color: 'var(--text-muted)', fontSize: '14px' },
 };
 
 export default Analytics;

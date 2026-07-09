@@ -32,6 +32,14 @@ router.post('/', authMiddleware, async (req, res) => {
       await Product.findByIdAndUpdate(product._id, { $inc: { stock: -item.quantity } });
     }
 
+    // Invalidate product cache since stock changed
+    try {
+      const { redisClient } = require('../config/redis');
+      await redisClient.del('products:all');
+    } catch (cacheErr) {
+      console.error('Redis cache clear error in order routing:', cacheErr);
+    }
+
     let discount = 0;
     if (discountCode === 'SAVE10') discount = total * 0.10;
     if (discountCode === 'SAVE20') discount = total * 0.20;
