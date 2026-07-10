@@ -9,7 +9,7 @@ function Navbar() {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [isAISearch, setIsAISearch] = useState(searchParams.get('ai') === 'true');
+  const [chatOpen, setChatOpen] = useState(() => sessionStorage.getItem('global_chatOpen') === 'true');
   const [searchFocused, setSearchFocused] = useState(false);
 
   const [cartCount, setCartCount] = useState(0);
@@ -75,8 +75,17 @@ function Navbar() {
 
   useEffect(() => {
     setSearchQuery(searchParams.get('q') || '');
-    setIsAISearch(searchParams.get('ai') === 'true');
   }, [searchParams]);
+
+  useEffect(() => {
+    const handleStateChange = (e) => {
+      setChatOpen(e.detail.open);
+    };
+    window.addEventListener('chatbot-state-changed', handleStateChange);
+    return () => {
+      window.removeEventListener('chatbot-state-changed', handleStateChange);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -88,7 +97,7 @@ function Navbar() {
   const handleSearchChange = (val) => {
     setSearchQuery(val);
     if (window.location.pathname !== '/') {
-      navigate('/?q=' + encodeURIComponent(val) + (isAISearch ? '&ai=true' : ''));
+      navigate('/?q=' + encodeURIComponent(val));
     } else {
       setSearchParams(prev => {
         if (!val) prev.delete('q');
@@ -99,32 +108,18 @@ function Navbar() {
   };
 
   const toggleAISearch = () => {
-    const nextAI = !isAISearch;
-    setIsAISearch(nextAI);
-    if (window.location.pathname !== '/') {
-      navigate('/?q=' + encodeURIComponent(searchQuery) + (nextAI ? '&ai=true' : ''));
-    } else {
-      setSearchParams(prev => {
-        if (nextAI) prev.set('ai', 'true');
-        else prev.delete('ai');
-        return prev;
-      });
-    }
+    window.dispatchEvent(new CustomEvent('toggle-chatbot'));
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      if (isAISearch) {
-        if (window.location.pathname !== '/') {
-          navigate('/?q=' + encodeURIComponent(searchQuery) + '&ai=true&t=' + Date.now());
-        } else {
-          setSearchParams(prev => {
-            prev.set('q', searchQuery);
-            prev.set('ai', 'true');
-            prev.set('t', Date.now().toString());
-            return prev;
-          });
-        }
+      if (window.location.pathname !== '/') {
+        navigate('/?q=' + encodeURIComponent(searchQuery));
+      } else {
+        setSearchParams(prev => {
+          prev.set('q', searchQuery);
+          return prev;
+        });
       }
     }
   };
@@ -165,7 +160,7 @@ function Navbar() {
             <input
               type="text"
               id="product-search-input"
-              placeholder={isAISearch ? "Ask AI (e.g. 'dumbbell', press Enter)..." : "Search products..."}
+              placeholder="Search products..."
               style={styles.searchInput}
               value={searchQuery}
               onChange={e => handleSearchChange(e.target.value)}
@@ -182,11 +177,11 @@ function Navbar() {
               </button>
             )}
             <button
-              style={isAISearch ? styles.aiBtnActive : styles.aiBtn}
+              style={chatOpen ? styles.aiBtnActive : styles.aiBtn}
               onClick={toggleAISearch}
-              title={isAISearch ? "AI Search Active" : "Enable AI Search"}
+              title={chatOpen ? "Close AI Shopping Assistant" : "Open AI Shopping Assistant"}
             >
-              🤖 {isAISearch ? 'AI Mode' : 'AI'}
+              🤖 {chatOpen ? 'AI Mode' : 'AI'}
             </button>
           </div>
 

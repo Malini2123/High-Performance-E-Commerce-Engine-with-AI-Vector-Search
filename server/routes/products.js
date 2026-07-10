@@ -118,6 +118,18 @@ router.post('/', async (req, res) => {
 // PUT /api/products/:id — update product
 router.put('/:id', async (req, res) => {
   try {
+    // If name, category, or description is updated, generate new embedding
+    if (req.body.name || req.body.category || req.body.description) {
+      const existing = await Product.findById(req.params.id);
+      if (existing) {
+        const name = req.body.name || existing.name;
+        const category = req.body.category || existing.category;
+        const description = req.body.description || existing.description;
+        const text = `${name} ${category} ${description || ''}`;
+        const { generateEmbedding } = require('../config/embeddings');
+        req.body.embedding = await generateEmbedding(text);
+      }
+    }
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       req.body,

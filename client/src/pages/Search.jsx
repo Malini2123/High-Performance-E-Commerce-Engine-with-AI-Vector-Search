@@ -38,23 +38,6 @@ export default function Search() {
 
   // Restore scroll position on page refresh
   useScrollRestore(loading);
-  const [chatHistory, setChatHistory] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem('search_chatHistory');
-      return saved ? JSON.parse(saved) : [
-        { role: 'ai', text: '👋 Hi! I\'m your AI shopping assistant. Ask me anything about products!' }
-      ];
-    } catch {
-      return [
-        { role: 'ai', text: '👋 Hi! I\'m your AI shopping assistant. Ask me anything about products!' }
-      ];
-    }
-  });
-  const [chatMsg, setChatMsg] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
-  const [chatOpen, setChatOpen] = useState(() => sessionStorage.getItem('search_chatOpen') === 'true');
-  const chatEndRef = useRef(null);
-
   // Sync state to sessionStorage
   useEffect(() => {
     sessionStorage.setItem('search_query', query);
@@ -67,18 +50,6 @@ export default function Search() {
   useEffect(() => {
     sessionStorage.setItem('search_searched', String(searched));
   }, [searched]);
-
-  useEffect(() => {
-    sessionStorage.setItem('search_chatHistory', JSON.stringify(chatHistory));
-  }, [chatHistory]);
-
-  useEffect(() => {
-    sessionStorage.setItem('search_chatOpen', String(chatOpen));
-  }, [chatOpen]);
-
-  useEffect(() => {
-    if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatHistory, chatOpen]);
 
   const handleSearch = async (e, q) => {
     if (e) e.preventDefault();
@@ -94,23 +65,6 @@ export default function Search() {
       setResults([]);
     }
     setLoading(false);
-  };
-
-  const handleChat = async (e) => {
-    e.preventDefault();
-    if (!chatMsg.trim() || chatLoading) return;
-    const userMsg = chatMsg.trim();
-    setChatHistory(prev => [...prev, { role: 'user', text: userMsg }]);
-    setChatMsg('');
-    setChatLoading(true);
-    try {
-      const res = await apiClient.post('/chatbot', { message: userMsg });
-      const reply = res.data.reply || res.data.response || 'No response.';
-      setChatHistory(prev => [...prev, { role: 'ai', text: reply }]);
-    } catch {
-      setChatHistory(prev => [...prev, { role: 'ai', text: 'Sorry, something went wrong!' }]);
-    }
-    setChatLoading(false);
   };
 
   return (
@@ -203,63 +157,6 @@ export default function Search() {
           </div>
         )}
       </div>
-
-      {/* Chat FAB */}
-      <motion.button
-        style={s.fab}
-        onClick={() => setChatOpen(o => !o)}
-        whileHover={{ scale: 1.1, rotate: 5 }}
-        whileTap={{ scale: 0.9, rotate: -5 }}
-      >
-        {chatOpen ? '✕' : '🤖'}
-      </motion.button>
-
-      {/* Chat Panel */}
-      <AnimatePresence>
-        {chatOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.9 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 220 }}
-            style={s.chatPanel}
-          >
-            <div style={s.chatHeader}>
-              <div>
-                <div style={s.chatTitle}>🤖 AI Shopping Assistant</div>
-                <div style={s.chatOnline}>● Online</div>
-              </div>
-              <button style={s.chatClose} onClick={() => setChatOpen(false)}>✕</button>
-            </div>
-
-            <div style={s.chatMessages}>
-              {chatHistory.map((msg, i) => (
-                <div key={i} style={msg.role === 'user' ? s.userBubble : s.aiBubble}>
-                  {msg.text}
-                </div>
-              ))}
-              {chatLoading && (
-                <div style={s.aiBubble}>
-                  <span style={{ opacity: 0.5 }}>Thinking...</span>
-                </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            <form style={s.chatForm} onSubmit={handleChat}>
-              <input
-                style={s.chatInput}
-                placeholder="Ask about products..."
-                value={chatMsg}
-                onChange={e => setChatMsg(e.target.value)}
-              />
-              <button type="submit" style={s.chatSend} disabled={!chatMsg.trim() || chatLoading}>
-                ➤
-              </button>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
     </AnimatedPage>
   );

@@ -33,5 +33,24 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
+productSchema.pre('save', async function(next) {
+  const hasEmbedding = this.embedding && this.embedding.length > 0;
+  
+  if (this.isNew && hasEmbedding) {
+    return next();
+  }
+
+  const isMetadataModified = this.isModified('name') || this.isModified('category') || this.isModified('description');
+  if (isMetadataModified || !hasEmbedding) {
+    try {
+      const { generateEmbedding } = require('../config/embeddings');
+      const text = `${this.name} ${this.category} ${this.description || ''}`;
+      this.embedding = await generateEmbedding(text);
+    } catch (err) {
+      console.error('Error in Product pre-save embedding generation:', err);
+    }
+  }
+  next();
+});
 
 module.exports = mongoose.model('Product', productSchema);

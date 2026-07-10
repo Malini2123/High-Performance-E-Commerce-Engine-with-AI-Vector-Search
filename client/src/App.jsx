@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollRestorer from './components/ScrollRestorer';
 import BackToTop from './components/BackToTop';
+import Chatbot from './components/Chatbot';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Search from './pages/Search';
@@ -51,6 +52,7 @@ function App() {
       </AnimatePresence>
       <Footer />
       <BackToTop />
+      <Chatbot />
     </>
   );
 }

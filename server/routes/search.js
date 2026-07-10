@@ -50,14 +50,39 @@ router.post('/', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Vector search error:', err);
-    if (err.message?.includes('$vectorSearch')) {
-      return res.status(500).json({
-        error: 'Vector index not ready. Check Atlas Search indexes — status must be Active.',
-        details: err.message
+    console.warn('Vector search failed, falling back to text/regex keyword search:', err.message);
+    try {
+      const { query, limit = 10 } = req.body;
+      if (!query || query.trim() === '') {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+      
+      const regex = new RegExp(query.split(/\s+/).filter(Boolean).map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'i');
+      
+      const fallbackResults = await Product.find({
+        $or: [
+          { name: { $regex: regex } },
+          { category: { $regex: regex } },
+          { description: { $regex: regex } }
+        ]
+      }, { embedding: 0 }).limit(limit);
+
+      const resultsWithScores = fallbackResults.map(p => {
+        const obj = p.toObject();
+        obj.score = 0.8; // Satisfy frontend score matching
+        return obj;
       });
+
+      res.json({
+        query,
+        count: resultsWithScores.length,
+        results: resultsWithScores,
+        fallback: true
+      });
+    } catch (fallbackErr) {
+      console.error('Search fallback failed:', fallbackErr);
+      res.status(500).json({ error: fallbackErr.message });
     }
-    res.status(500).json({ error: err.message });
   }
 });
 

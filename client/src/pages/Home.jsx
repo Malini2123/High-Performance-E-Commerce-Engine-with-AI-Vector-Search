@@ -313,7 +313,7 @@ function Home() {
   };
 
   useEffect(() => {
-    if (isAISearch) return;
+    if (isAISearch && searchQuery.trim()) return;
     if (searchQuery.trim()) {
       setSearchMode(true);
       const q = searchQuery.toLowerCase();

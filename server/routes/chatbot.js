@@ -9,23 +9,36 @@ router.post('/', async (req, res) => {
     const { message } = req.body;
     if (!message) return res.status(400).json({ error: 'Message is required' });
 
-    // Generate embedding for the user's question
-    const queryEmbedding = await generateEmbedding(message);
-
-    // Find semantically relevant products
-    const products = await Product.aggregate([
-      {
-        $vectorSearch: {
-          index: 'vector_index',
-          path: 'embedding',
-          queryVector: queryEmbedding,
-          numCandidates: 20,
-          limit: 3
-        }
-      },
-      { $addFields: { score: { $meta: 'vectorSearchScore' } } },
-      { $project: { embedding: 0 } }
-    ]);
+    // Find semantically relevant products (with keyword-based regex fallback)
+    let products = [];
+    try {
+      // Generate embedding for the user's question
+      const queryEmbedding = await generateEmbedding(message);
+      
+      products = await Product.aggregate([
+        {
+          $vectorSearch: {
+            index: 'vector_index',
+            path: 'embedding',
+            queryVector: queryEmbedding,
+            numCandidates: 20,
+            limit: 3
+          }
+        },
+        { $addFields: { score: { $meta: 'vectorSearchScore' } } },
+        { $project: { embedding: 0 } }
+      ]);
+    } catch (vectorErr) {
+      console.warn('Vector search in chatbot failed, falling back to regex keyword search:', vectorErr.message);
+      const regex = new RegExp(message.split(/\s+/).filter(Boolean).map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'i');
+      products = await Product.find({
+        $or: [
+          { name: { $regex: regex } },
+          { category: { $regex: regex } },
+          { description: { $regex: regex } }
+        ]
+      }, { embedding: 0 }).limit(3);
+    }
 
     // Build smart response
     let reply = '';
