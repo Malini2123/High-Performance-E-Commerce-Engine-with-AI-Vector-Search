@@ -7,7 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
+  hover: {
+    y: -8,
+    boxShadow: 'var(--shadow-card-hover)',
+    borderColor: 'var(--secondary)',
+  }
 };
 
 const CATEGORY_ICONS = {
@@ -93,13 +98,6 @@ function ProductCard({ product }) {
       whileHover="hover"
       onClick={() => navigate(`/product/${product._id}`)}
       style={styles.card}
-      variants={{
-        hover: {
-          y: -8,
-          boxShadow: 'var(--shadow-card-hover)',
-          borderColor: 'var(--secondary)',
-        }
-      }}
     >
       {/* ── Image Area ── */}
       <div style={styles.imageWrapper}>
