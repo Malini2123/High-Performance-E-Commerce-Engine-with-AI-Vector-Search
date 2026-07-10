@@ -63,7 +63,17 @@ const GENERIC_IMAGE_FRAGMENTS = [
   'photo-1525904097878-94fb15835963', // shared watches
   'photo-1523275335684-37898b6baf30', // shared watches 2
   'photo-1625634741537-7a63dc5f15d4', // shared usb/drives
-  'photo-1496181133206-80ce9b88a853', // shared laptops/bags
+];
+
+const FEATURED_PRODUCT_NAMES = [
+  'iPhone 15 Pro',
+  'WH-1000XM5 Headphones',
+  'Smart TV 55"',
+  'Inspiron 15 Laptop',
+  'EOS R50 Camera',
+  'iPad Air 5th',
+  'Galaxy Watch 6',
+  'JBL Flip 6'
 ];
 
 function hasProperImage(product) {
@@ -335,15 +345,18 @@ function Home() {
     let result = products.filter(hasProperImage);
     if (activeCategory) {
       result = result.filter(p => p.category?.toLowerCase() === activeCategory.toLowerCase());
-    }
-    if (sortBy === 'price-low') result.sort((a, b) => a.price - b.price);
-    else if (sortBy === 'price-high') result.sort((a, b) => b.price - a.price);
-    else if (sortBy === 'name') result.sort((a, b) => a.name.localeCompare(b.name));
-    
-    if (activeCategory) {
+      if (sortBy === 'price-low') result.sort((a, b) => a.price - b.price);
+      else if (sortBy === 'price-high') result.sort((a, b) => b.price - a.price);
+      else if (sortBy === 'name') result.sort((a, b) => a.name.localeCompare(b.name));
       setFiltered(result.slice(0, 40));
     } else {
-      setFiltered(result.slice(0, 12));
+      let featured = result.filter(p => 
+        FEATURED_PRODUCT_NAMES.some(name => p.name?.toLowerCase().includes(name.toLowerCase()))
+      );
+      if (sortBy === 'price-low') featured.sort((a, b) => a.price - b.price);
+      else if (sortBy === 'price-high') featured.sort((a, b) => b.price - a.price);
+      else if (sortBy === 'name') featured.sort((a, b) => a.name.localeCompare(b.name));
+      setFiltered(featured.length > 0 ? featured : result.slice(0, 8));
     }
   }, [activeCategory, sortBy, products, searchQuery, isAISearch]);
 
