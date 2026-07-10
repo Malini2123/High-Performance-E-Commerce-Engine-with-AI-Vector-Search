@@ -306,7 +306,8 @@ function Home() {
     setSearchMode(true);
     try {
       const res = await apiClient.post('/search', { query: searchQuery, limit: 40 });
-      setFiltered(res.data.results || []);
+      const results = res.data.results || [];
+      setFiltered(results.filter(hasProperImage));
     } catch (err) {
       setError(err.response?.data?.error || 'Search failed. Please try again.');
     } finally { setLoading(false); }
@@ -319,6 +320,7 @@ function Home() {
       const q = searchQuery.toLowerCase();
       setFiltered(
         products
+          .filter(hasProperImage)
           .filter(p =>
             (p.name?.toLowerCase().includes(q) ||
             p.description?.toLowerCase().includes(q) ||
@@ -330,7 +332,7 @@ function Home() {
     }
     
     setSearchMode(false);
-    let result = [...products];
+    let result = products.filter(hasProperImage);
     if (activeCategory) {
       result = result.filter(p => p.category?.toLowerCase() === activeCategory.toLowerCase());
     }
@@ -348,7 +350,7 @@ function Home() {
 
 
   // Today's deals: pick 6 products spaced evenly across the list
-  const todaysDeals = products.filter((_, i) => i % 8 === 3 || i % 8 === 5).slice(0, 6);
+  const todaysDeals = products.filter(hasProperImage).filter((_, i) => i % 8 === 3 || i % 8 === 5).slice(0, 6);
 
   return (
     <AnimatedPage>
