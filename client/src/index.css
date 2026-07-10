@@ -77,7 +77,8 @@ html {
 
 body {
   font-family: var(--sans);
-  background-color: var(--bg-primary);
+  background: linear-gradient(135deg, #F4F9F5 0%, #D5EBD7 50%, #BCE2BF 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

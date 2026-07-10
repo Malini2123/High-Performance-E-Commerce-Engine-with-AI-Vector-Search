@@ -330,7 +330,7 @@ function ProductDetail() {
 }
 
 const styles = {
-  container: { maxWidth: '1200px', margin: '0 auto', padding: '40px 20px', animation: 'fadeIn 0.5s ease-out' },
+  container: { width: '92%', maxWidth: '1600px', margin: '0 auto', padding: '40px 20px', animation: 'fadeIn 0.5s ease-out' },
   center: { textAlign: 'center', padding: '100px 20px', color: 'var(--text-secondary)', fontSize: '16px' },
   back: {
     background: 'var(--card-bg)',

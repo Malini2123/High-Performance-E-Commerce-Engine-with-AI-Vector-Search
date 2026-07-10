@@ -15,6 +15,7 @@ import Cart from './pages/Cart';
 import Wishlist from './pages/Wishlist';
 import Orders from './pages/Orders';
 import Analytics from './pages/Analytics';
+import Admin from './pages/Admin';
 import apiClient from './api/client';
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </AnimatePresence>
       <Footer />

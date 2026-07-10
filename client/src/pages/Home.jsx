@@ -77,13 +77,7 @@ const FEATURED_PRODUCT_NAMES = [
 ];
 
 function hasProperImage(product) {
-  // Must have a stored image URL in the database
-  if (!product.image || !product.image.startsWith('http')) return false;
-  // Skip Amazon images (blocked hotlinking)
-  if (product.image.includes('media-amazon') || product.image.includes('m.media-amazon')) return false;
-  // Skip generic placeholder images shared across many products
-  if (GENERIC_IMAGE_FRAGMENTS.some(frag => product.image.includes(frag))) return false;
-  return true;
+  return product.image && product.image.startsWith('http') && !product.image.includes('media-amazon');
 }
 
 // Deterministic discount based on product id

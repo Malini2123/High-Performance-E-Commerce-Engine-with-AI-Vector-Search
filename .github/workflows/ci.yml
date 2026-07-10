@@ -1,0 +1,84 @@
+name: CI — Lint & Test
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # Job 1: Lint the React client
+  # ──────────────────────────────────────────────────────────
+  lint-client:
+    name: ESLint (Client)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: client
+        run: npm run lint
+
+  # ──────────────────────────────────────────────────────────
+  # Job 2: Run server tests
+  # ──────────────────────────────────────────────────────────
+  test-server:
+    name: Jest Tests (Server)
+    runs-on: ubuntu-latest
+
+    # Provide environment variables for tests
+    env:
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-jwt-secret-ci' }}
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Run tests
+        working-directory: server
+        run: npm test
+
+  # ──────────────────────────────────────────────────────────
+  # Job 3: Status gate (summary badge)
+  # ──────────────────────────────────────────────────────────
+  ci-passed:
+    name: CI Passed
+    needs: [lint-client, test-server]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check all jobs passed
+        run: |
+          if [[ "${{ needs.lint-client.result }}" != "success" || "${{ needs.test-server.result }}" != "success" ]]; then
+            echo "❌ CI failed — lint or tests did not pass."
+            exit 1
+          fi
+          echo "✅ All CI checks passed!"

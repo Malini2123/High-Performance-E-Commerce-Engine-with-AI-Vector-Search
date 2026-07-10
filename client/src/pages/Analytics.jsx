@@ -146,7 +146,7 @@ function Analytics() {
 }
 
 const styles = {
-  container: { maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' },
+  container: { width: '92%', maxWidth: '1600px', margin: '0 auto', padding: '40px 20px' },
   title: { fontSize: '28px', fontWeight: 800, marginBottom: '24px', color: 'var(--text-primary)', letterSpacing: '-0.02em' },
   loading: { textAlign: 'center', padding: '100px 20px', color: 'var(--text-secondary)', fontSize: '15px' },
   cards: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' },

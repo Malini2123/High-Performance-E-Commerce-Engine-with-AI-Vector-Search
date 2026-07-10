@@ -125,7 +125,7 @@ function Wishlist() {
 }
 
 const styles = {
-  container: { maxWidth: '1200px', margin: '0 auto', padding: '40px 20px', animation: 'fadeIn 0.5s ease-out' },
+  container: { width: '92%', maxWidth: '1600px', margin: '0 auto', padding: '40px 20px', animation: 'fadeIn 0.5s ease-out' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' },
   title: { fontSize: '28px', fontWeight: 800, margin: '0 0 6px', color: 'var(--text-primary)', letterSpacing: '-0.02em' },
   subtitle: { color: 'var(--text-secondary)', fontSize: '14px', margin: 0, fontWeight: 500 },
