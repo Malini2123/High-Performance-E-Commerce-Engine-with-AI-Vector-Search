@@ -33,11 +33,11 @@ const productSchema = new mongoose.Schema({
   timestamps: true
 });
 
-productSchema.pre('save', async function(next) {
+productSchema.pre('save', async function() {
   const hasEmbedding = this.embedding && this.embedding.length > 0;
   
   if (this.isNew && hasEmbedding) {
-    return next();
+    return;
   }
 
   const isMetadataModified = this.isModified('name') || this.isModified('category') || this.isModified('description');
@@ -50,7 +50,6 @@ productSchema.pre('save', async function(next) {
       console.error('Error in Product pre-save embedding generation:', err);
     }
   }
-  next();
 });
 
 module.exports = mongoose.model('Product', productSchema);

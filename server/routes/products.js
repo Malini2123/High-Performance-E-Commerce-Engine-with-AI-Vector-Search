@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/product');
 const { redisClient } = require('../config/redis');
+const authMiddleware = require('../middleware/auth');
+const adminOnly = authMiddleware.adminOnly;
 
 // GET /api/products — with filters, sorting, pagination and cache
 router.get('/', async (req, res) => {
@@ -104,8 +106,8 @@ router.get('/:id/similar', async (req, res) => {
   }
 });
 
-// POST /api/products — create product
-router.post('/', async (req, res) => {
+// POST /api/products — create product (admin only)
+router.post('/', authMiddleware, adminOnly, async (req, res) => {
   try {
     const product = await Product.create(req.body);
     await redisClient.del('products:all');
@@ -115,8 +117,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/products/:id — update product
-router.put('/:id', async (req, res) => {
+// PUT /api/products/:id — update product (admin only)
+router.put('/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     // If name, category, or description is updated, generate new embedding
     if (req.body.name || req.body.category || req.body.description) {
@@ -147,8 +149,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/products/:id — delete product
-router.delete('/:id', async (req, res) => {
+// DELETE /api/products/:id — delete product (admin only)
+router.delete('/:id', authMiddleware, adminOnly, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {

@@ -3,6 +3,11 @@ const router = express.Router();
 const Order = require('../models/order');
 const Product = require('../models/product');
 const User = require('../models/user');
+const authMiddleware = require('../middleware/auth');
+const adminOnly = authMiddleware.adminOnly;
+
+// Protect all analytics endpoints for admin only
+router.use(authMiddleware, adminOnly);
 
 // GET /api/analytics/summary
 router.get('/summary', async (req, res) => {

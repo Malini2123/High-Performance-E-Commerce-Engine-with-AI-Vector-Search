@@ -58,6 +58,7 @@ function Analytics() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (!user) { navigate('/login'); return; }
+    if (user.role !== 'admin') { navigate('/'); return; }
     fetchAll();
   }, [navigate, fetchAll]);
 

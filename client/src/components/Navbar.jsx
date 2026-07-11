@@ -228,7 +228,12 @@ function Navbar() {
             </Link>
 
             <Link to="/orders" className="nav-link">Orders</Link>
-            <Link to="/analytics" className="nav-link">Analytics</Link>
+            {user?.role === 'admin' && (
+              <>
+                <Link to="/admin" className="nav-link" style={{ fontWeight: 700, color: 'var(--primary)' }}>💼 Admin Panel</Link>
+                <Link to="/analytics" className="nav-link">Analytics</Link>
+              </>
+            )}
 
             {user ? (
               <div 
@@ -316,7 +321,12 @@ function Navbar() {
               
               <Link to="/wishlist" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>❤️ Wishlist {wishlistCount > 0 && <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '12px', padding: '1px 6px', fontSize: '10px', fontWeight: 800, marginLeft: '5px' }}>{wishlistCount}</span>}</Link>
               <Link to="/orders" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>📦 Orders</Link>
-              <Link to="/analytics" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>📈 Analytics</Link>
+              {user?.role === 'admin' && (
+                <>
+                  <Link to="/admin" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>💼 Admin Panel</Link>
+                  <Link to="/analytics" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>📈 Analytics</Link>
+                </>
+              )}
 
               <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
 

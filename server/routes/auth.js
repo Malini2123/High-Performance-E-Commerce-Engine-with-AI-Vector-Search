@@ -4,6 +4,25 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 
+const ensureAdminUser = async () => {
+  try {
+    const admin = await User.findOne({ email: 'admin@zapcart.com' });
+    if (!admin) {
+      await User.create({
+        name: 'ZapCart Administrator',
+        email: 'admin@zapcart.com',
+        password: 'admin123',
+        role: 'admin'
+      });
+      console.log('⚡ Seeded default admin account: admin@zapcart.com / admin123');
+    }
+  } catch (err) {
+    console.error('❌ Failed to seed default admin user:', err);
+  }
+};
+ensureAdminUser();
+
+
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };

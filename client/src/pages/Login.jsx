@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '../api/client';
 import AnimatedPage from '../components/AnimatedPage';
 import { motion } from 'framer-motion';
 
 function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialRole = searchParams.get('role') === 'admin' ? 'admin' : 'user';
+
+  const [roleType, setRoleType] = useState(initialRole); // 'user' | 'admin'
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -16,8 +20,16 @@ function Login() {
     setError('');
     try {
       const res = await apiClient.post('/auth/login', form);
+      const user = res.data.user;
+
+      if (roleType === 'admin' && user?.role !== 'admin') {
+        setError('Access Denied: Administrator privilege verification failed. Regular users cannot log in as admin.');
+        setLoading(false);
+        return;
+      }
+
       localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
+      localStorage.setItem('user', JSON.stringify(user));
       try {
         const wishRes = await apiClient.get('/wishlist');
         const list = wishRes.data.wishlist || wishRes.data || [];
@@ -25,7 +37,13 @@ function Login() {
       } catch (err) {
         console.error('Error fetching wishlist on login:', err);
       }
-      navigate('/');
+
+      if (roleType === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     }
@@ -96,7 +114,55 @@ function Login() {
           <div style={styles.formCol}>
             <div style={styles.card}>
               <h1 style={styles.title}>Welcome back</h1>
-              <p style={styles.subtitle}>Login to your ZapCart account</p>
+              <p style={styles.subtitle}>Choose your login portal below</p>
+
+              {/* Mode Toggle Selector */}
+              <div style={{
+                display: 'flex',
+                background: 'var(--bg-secondary)',
+                borderRadius: '12px',
+                padding: '4px',
+                marginBottom: '24px',
+                border: '1.5px solid var(--border)',
+                gap: '4px'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => { setRoleType('user'); setError(''); }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: roleType === 'user' ? 'var(--primary)' : 'transparent',
+                    color: roleType === 'user' ? '#fff' : 'var(--text-secondary)',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  🛍️ Customer Portal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setRoleType('admin'); setError(''); }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: roleType === 'admin' ? '#0F172A' : 'transparent',
+                    color: roleType === 'admin' ? '#fff' : 'var(--text-secondary)',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  🔒 Admin Terminal
+                </button>
+              </div>
 
               {error && <div style={styles.error}>{error}</div>}
 
@@ -134,10 +200,12 @@ function Login() {
                 </motion.button>
               </form>
 
-              <p style={styles.switchText}>
-                Don't have an account?{' '}
-                <Link to="/register" style={styles.link}>Register here</Link>
-              </p>
+              {roleType === 'user' && (
+                <p style={styles.switchText}>
+                  Don't have an account?{' '}
+                  <Link to="/register" style={styles.link}>Register here</Link>
+                </p>
+              )}
             </div>
           </div>
         </div>

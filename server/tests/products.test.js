@@ -36,6 +36,16 @@ jest.mock('../config/embeddings', () => ({
   generateEmbedding: jest.fn().mockResolvedValue(new Array(384).fill(0.1)),
 }));
 
+// ── Mock Auth Middleware to bypass for testing ──────────────
+jest.mock('../middleware/auth', () => {
+  const mockAuth = (req, res, next) => {
+    req.user = { _id: '64a1b2c3d4e5f60000000001', role: 'admin', name: 'Mock Admin' };
+    next();
+  };
+  mockAuth.adminOnly = (req, res, next) => next();
+  return mockAuth;
+});
+
 // ── Mock Mongoose models ───────────────────────────────────
 const mockProducts = [
   {
