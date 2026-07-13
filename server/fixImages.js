@@ -46,13 +46,13 @@ function getUnsplashImage(name, category) {
   if (n.includes('granola') || n.includes('granola bar')) return 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&h=450&fit=crop&q=80';
   if (n.includes('apple cider') || n.includes('vinegar')) return 'https://images.unsplash.com/photo-1598511726623-d2e9996e6cff?w=600&h=450&fit=crop&q=80';
   if (n.includes('almond')) return 'https://images.unsplash.com/photo-1574570083767-bf9ff1627f62?w=600&h=450&fit=crop&q=80';
-  if (n.includes('coconut oil') || n.includes('coconut')) return 'https://images.unsplash.com/photo-1526181438849-3e0e31ece72e?w=600&h=450&fit=crop&q=80';
+  if (n.includes('coconut oil') || n.includes('coconut')) return 'https://images.unsplash.com/photo-1525385133772-2a8b97a3d848?w=600&h=450&fit=crop&q=80';
   if (n.includes('protein powder') || n.includes('whey')) return 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=600&h=450&fit=crop&q=80';
   if (cat === 'food') return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&h=450&fit=crop&q=80';
 
   // === BEAUTY ===
   if (n.includes('vitamin c') && n.includes('serum')) return 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=600&h=450&fit=crop&q=80';
-  if (n.includes('hyaluronic') || n.includes('moisturizer')) return 'https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?w=600&h=450&fit=crop&q=80';
+  if (n.includes('hyaluronic') || n.includes('moisturizer')) return 'https://images.unsplash.com/photo-1556228852-6d35a585d566?w=600&h=450&fit=crop&q=80';
   if (n.includes('sunscreen') || n.includes('spf')) return 'https://images.unsplash.com/photo-1556228852-6d35a585d566?w=600&h=450&fit=crop&q=80';
   if (n.includes('retinol') || n.includes('night cream')) return 'https://images.unsplash.com/photo-1556229174-5e42a09e45af?w=600&h=450&fit=crop&q=80';
   if (n.includes('rose water') || n.includes('toner')) return 'https://images.unsplash.com/photo-1598454444314-28cf5b58b11c?w=600&h=450&fit=crop&q=80';
@@ -60,10 +60,10 @@ function getUnsplashImage(name, category) {
   if (n.includes('argan oil') || n.includes('hair serum')) return 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=600&h=450&fit=crop&q=80';
   if (n.includes('lipstick') || n.includes('lip')) return 'https://images.unsplash.com/photo-1586495777744-4e6232bf2f9e?w=600&h=450&fit=crop&q=80';
   if (n.includes('niacinamide') || n.includes('serum')) return 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=600&h=450&fit=crop&q=80';
-  if (n.includes('micellar') || n.includes('makeup remover')) return 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&h=450&fit=crop&q=80';
+  if (n.includes('micellar') || n.includes('makeup remover')) return 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&h=450&fit=crop&q=80';
   if (n.includes('keratin') || n.includes('hair mask')) return 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=600&h=450&fit=crop&q=80';
-  if (n.includes('perfume') || n.includes('eau de parfum') || n.includes('fragrance')) return 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&h=450&fit=crop&q=80';
-  if (n.includes('eye cream') || n.includes('dark circle')) return 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&h=450&fit=crop&q=80';
+  if (n.includes('perfume') || n.includes('eau de parfum') || n.includes('fragrance')) return 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=600&h=450&fit=crop&q=80';
+  if (n.includes('eye cream') || n.includes('dark circle')) return 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&h=450&fit=crop&q=80';
   if (n.includes('bb cream') || n.includes('foundation')) return 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&h=450&fit=crop&q=80';
   if (n.includes('aloe vera')) return 'https://images.unsplash.com/photo-1598454444314-28cf5b58b11c?w=600&h=450&fit=crop&q=80';
   if (cat === 'beauty') return 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&h=450&fit=crop&q=80';
@@ -120,12 +120,8 @@ async function fixImages() {
 
     let updated = 0;
     for (const p of products) {
-      // Replace missing, amazon, or other non-working images
-      const needsUpdate = !p.image ||
-        p.image.includes('amazon') ||
-        p.image.includes('m.media-amazon') ||
-        p.image === '' ||
-        !p.image.startsWith('http');
+      // Force update all images to guarantee high-quality working Unsplash URLs
+      const needsUpdate = true;
 
       if (needsUpdate) {
         const newImg = getUnsplashImage(p.name, p.category);

@@ -18,7 +18,7 @@ export function getFallbackImage(name, category) {
   if (n.includes('honey')) return 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&h=450&fit=crop&q=80';
   if (n.includes('protein') || n.includes('whey')) return 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=600&h=450&fit=crop&q=80';
   if (n.includes('green tea') || n.includes('tea')) return 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&h=450&fit=crop&q=80';
-  if (n.includes('coconut oil') || n.includes('coconut')) return 'https://images.unsplash.com/photo-1526181438849-3e0e31ece72e?w=600&h=450&fit=crop&q=80';
+  if (n.includes('coconut oil') || n.includes('coconut')) return 'https://images.unsplash.com/photo-1525385133772-2a8b97a3d848?w=600&h=450&fit=crop&q=80';
   if (n.includes('quinoa')) return 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600&h=450&fit=crop&q=80';
   if (n.includes('oat') || n.includes('oatmeal')) return 'https://images.unsplash.com/photo-1495214783159-3503fd1b572d?w=600&h=450&fit=crop&q=80';
   if (n.includes('apple cider') || n.includes('vinegar')) return 'https://images.unsplash.com/photo-1598511726623-d2e9996e6cff?w=600&h=450&fit=crop&q=80';
@@ -110,10 +110,10 @@ export function getFallbackImage(name, category) {
 
   // Beauty
   if (n.includes('face wash') || n.includes('cleanser')) return 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&h=450&fit=crop&q=80';
-  if (n.includes('moisturizer') || n.includes('cream') || n.includes('lotion')) return 'https://images.unsplash.com/photo-1570194065650-d99fb4bedf0a?w=600&h=450&fit=crop&q=80';
+  if (n.includes('moisturizer') || n.includes('cream') || n.includes('lotion')) return 'https://images.unsplash.com/photo-1556228852-6d35a585d566?w=600&h=450&fit=crop&q=80';
   if (n.includes('lipstick') || n.includes('lip')) return 'https://images.unsplash.com/photo-1586495777744-4e6232bf2f9e?w=600&h=450&fit=crop&q=80';
-  if (n.includes('mascara') || n.includes('eyeliner') || n.includes('eye')) return 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=600&h=450&fit=crop&q=80';
-  if (n.includes('perfume') || n.includes('fragrance')) return 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&h=450&fit=crop&q=80';
+  if (n.includes('mascara') || n.includes('eyeliner') || n.includes('eye')) return 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&h=450&fit=crop&q=80';
+  if (n.includes('perfume') || n.includes('fragrance')) return 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=600&h=450&fit=crop&q=80';
   if (n.includes('shampoo') || n.includes('hair')) return 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=600&h=450&fit=crop&q=80';
   if (n.includes('sunscreen') || n.includes('spf')) return 'https://images.unsplash.com/photo-1556228852-6d35a585d566?w=600&h=450&fit=crop&q=80';
   if (n.includes('serum')) return 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=600&h=450&fit=crop&q=80';
@@ -133,19 +133,9 @@ export function getFallbackImage(name, category) {
 }
 
 export function getImageUrl(product) {
-  if (!product) return getFallbackImage('', '');
+  if (!product) return 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=600&h=450&fit=crop&q=80';
 
-  // 1. Check if we have a specific keyword-based fallback image first!
-  const fallback = getFallbackImage(product.name, product.category);
-  const genericFood = 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd';
-  const defaultFallback = 'https://images.unsplash.com/photo-1472851294608-062f824d29cc';
-
-  // If the fallback is a specific keyword match (not a generic category or default one), prioritize it
-  if (fallback && !fallback.includes(genericFood) && !fallback.includes(defaultFallback)) {
-    return fallback;
-  }
-
-  // 2. Use the stored image if it's from a known-working CDN (not Amazon which blocks hotlinks)
+  // 1. Prioritize the database image if it is a valid, working external URL
   if (
     product.image &&
     product.image.startsWith('http') &&
@@ -155,6 +145,6 @@ export function getImageUrl(product) {
     return product.image;
   }
 
-  // 3. Fallback to general mapping
-  return fallback;
+  // 2. Fallback to local mapping if database image is missing or blocked
+  return getFallbackImage(product.name, product.category);
 }

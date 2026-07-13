@@ -17,6 +17,7 @@ import Orders from './pages/Orders';
 import Analytics from './pages/Analytics';
 import Admin from './pages/Admin';
 import apiClient from './api/client';
+// CursorGlow removed — user does not want mouse-following circle
 
 function App() {
   const location = useLocation();

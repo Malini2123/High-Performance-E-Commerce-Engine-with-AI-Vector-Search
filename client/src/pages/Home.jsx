@@ -7,6 +7,7 @@ import { getImageUrl } from '../utils/images';
 import useScrollRestore from '../hooks/useScrollRestore';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import AnimatedPage from '../components/AnimatedPage';
+import Magnetic from '../components/Magnetic';
 
 const staggerContainer = {
   hidden: { opacity: 0 },
@@ -344,13 +345,26 @@ function Home() {
       else if (sortBy === 'name') result.sort((a, b) => a.name.localeCompare(b.name));
       setFiltered(result.slice(0, 40));
     } else {
-      let featured = result.filter(p => 
-        FEATURED_PRODUCT_NAMES.some(name => p.name?.toLowerCase().includes(name.toLowerCase()))
-      );
+      const categories = ['electronics', 'clothing', 'food', 'books', 'sports', 'beauty'];
+      const mixedFeatured = [];
+      
+      for (const cat of categories) {
+        const catProducts = result.filter(p => p.category?.toLowerCase() === cat);
+        mixedFeatured.push(...catProducts.slice(0, 2));
+      }
+      
+      if (mixedFeatured.length < 12) {
+        const remaining = result.filter(p => !mixedFeatured.some(m => m._id === p._id));
+        mixedFeatured.push(...remaining.slice(0, 12 - mixedFeatured.length));
+      }
+
+      let featured = mixedFeatured.slice(0, 12);
+
       if (sortBy === 'price-low') featured.sort((a, b) => a.price - b.price);
       else if (sortBy === 'price-high') featured.sort((a, b) => b.price - a.price);
       else if (sortBy === 'name') featured.sort((a, b) => a.name.localeCompare(b.name));
-      setFiltered(featured.length > 0 ? featured : result.slice(0, 8));
+      
+      setFiltered(featured);
     }
   }, [activeCategory, sortBy, products, searchQuery, isAISearch]);
 
@@ -400,12 +414,16 @@ function Home() {
                   </motion.p>
 
                   <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }} style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ padding: '12px 24px', background: '#4ADE80', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }} onClick={() => { const el = document.getElementById('deals'); el && el.scrollIntoView({ behavior: 'smooth' }); }}>
-                      🛍️ Shop Today's Deals
-                    </motion.button>
-                    <motion.button whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.12)' }} whileTap={{ scale: 0.95 }} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }} onClick={() => { const el = document.getElementById('browse'); el && el.scrollIntoView({ behavior: 'smooth' }); }}>
-                      Browse Products →
-                    </motion.button>
+                    <Magnetic>
+                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ padding: '12px 24px', background: '#4ADE80', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }} onClick={() => { const el = document.getElementById('deals'); el && el.scrollIntoView({ behavior: 'smooth' }); }}>
+                        🛍️ Shop Today's Deals
+                      </motion.button>
+                    </Magnetic>
+                    <Magnetic>
+                      <motion.button whileHover={{ scale: 1.05, background: 'rgba(255,255,255,0.12)' }} whileTap={{ scale: 0.95 }} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }} onClick={() => { const el = document.getElementById('browse'); el && el.scrollIntoView({ behavior: 'smooth' }); }}>
+                        Browse Products →
+                      </motion.button>
+                    </Magnetic>
                   </motion.div>
 
                   <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.6 }} style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 36 }}>
@@ -543,36 +561,39 @@ function Home() {
               {/* Category pills */}
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginRight: '4px' }}>Category:</span>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => { setActiveCategory(null); setSearchMode(false); }}
-                  style={{
-                    padding: '6px 14px',
-                    background: !activeCategory ? 'var(--secondary)' : 'var(--bg-secondary)',
-                    color: !activeCategory ? '#fff' : 'var(--text-primary)',
-                    border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  All
-                </motion.button>
-                {CATEGORIES.map(cat => (
+                <Magnetic>
                   <motion.button
-                    key={cat.label}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => setActiveCategory(cat.label)}
+                    onClick={() => { setActiveCategory(null); setSearchMode(false); }}
                     style={{
                       padding: '6px 14px',
-                      background: activeCategory === cat.label ? 'var(--secondary)' : 'var(--bg-secondary)',
-                      color: activeCategory === cat.label ? '#fff' : 'var(--text-primary)',
+                      background: !activeCategory ? 'var(--secondary)' : 'var(--bg-secondary)',
+                      color: !activeCategory ? '#fff' : 'var(--text-primary)',
                       border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer',
                       transition: 'all 0.2s',
                     }}
                   >
-                    {cat.icon} {cat.label}
+                    All
                   </motion.button>
+                </Magnetic>
+                {CATEGORIES.map(cat => (
+                  <Magnetic key={cat.label}>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setActiveCategory(cat.label)}
+                      style={{
+                        padding: '6px 14px',
+                        background: activeCategory === cat.label ? 'var(--secondary)' : 'var(--bg-secondary)',
+                        color: activeCategory === cat.label ? '#fff' : 'var(--text-primary)',
+                        border: 'none', borderRadius: 20, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {cat.icon} {cat.label}
+                    </motion.button>
+                  </Magnetic>
                 ))}
               </div>
 
