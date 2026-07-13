@@ -25,17 +25,17 @@ export default function CartDrawer({ isOpen, onClose }) {
     };
   }, []);
 
-  const updateQuantity = (id, delta) => {
+  const updateQuantity = (id, size, delta) => {
     const updated = cartItems
-      .map(item => item._id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)
+      .map(item => (item._id === id && (item.selectedSize || '') === (size || '')) ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)
       .filter(item => item.quantity > 0);
     setCartItems(updated);
     localStorage.setItem('cart', JSON.stringify(updated));
     window.dispatchEvent(new Event('cart-updated'));
   };
 
-  const removeItem = (id) => {
-    const updated = cartItems.filter(item => item._id !== id);
+  const removeItem = (id, size) => {
+    const updated = cartItems.filter(item => !(item._id === id && (item.selectedSize || '') === (size || '')));
     setCartItems(updated);
     localStorage.setItem('cart', JSON.stringify(updated));
     window.dispatchEvent(new Event('cart-updated'));
@@ -85,7 +85,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               ) : (
                 <div style={styles.itemList}>
                   {cartItems.map(item => (
-                    <div key={item._id} style={styles.item}>
+                    <div key={`${item._id}-${item.selectedSize || ''}`} style={styles.item}>
                       <img
                         src={getImageUrl(item)}
                         alt={item.name}
@@ -101,16 +101,21 @@ export default function CartDrawer({ isOpen, onClose }) {
                       </div>
                       <div style={styles.itemDetails}>
                         <div style={styles.itemName}>{item.name}</div>
+                        {item.selectedSize && (
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '2px 0 4px' }}>
+                            Size: <strong>{item.selectedSize}</strong>
+                          </div>
+                        )}
                         <div style={styles.itemPrice}>₹{item.price}</div>
                         <div style={styles.controls}>
-                          <button onClick={() => updateQuantity(item._id, -1)} style={styles.qtyBtn}>−</button>
+                          <button onClick={() => updateQuantity(item._id, item.selectedSize, -1)} style={styles.qtyBtn}>−</button>
                           <span style={styles.qtyVal}>{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item._id, 1)} style={styles.qtyBtn}>+</button>
+                          <button onClick={() => updateQuantity(item._id, item.selectedSize, 1)} style={styles.qtyBtn}>+</button>
                         </div>
                       </div>
                       <div style={styles.itemRight}>
                         <div style={styles.itemTotal}>₹{(item.price * item.quantity).toFixed(2)}</div>
-                        <button onClick={() => removeItem(item._id)} style={styles.removeBtn}>✕</button>
+                        <button onClick={() => removeItem(item._id, item.selectedSize)} style={styles.removeBtn}>✕</button>
                       </div>
                     </div>
                   ))}
@@ -126,7 +131,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                   <span style={styles.subtotalVal}>₹{subtotal.toFixed(2)}</span>
                 </div>
                 <button onClick={handleCheckoutClick} style={styles.checkoutBtn}>
-                  Go to Cart & Checkout →
+                  Order Now →
                 </button>
               </div>
             )}

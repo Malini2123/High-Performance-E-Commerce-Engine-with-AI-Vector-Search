@@ -61,17 +61,17 @@ function Cart() {
     };
   }, [cartItems]);
 
-  const updateQuantity = (id, delta) => {
+  const updateQuantity = (id, size, delta) => {
     const updated = cartItems
-      .map(item => item._id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)
+      .map(item => (item._id === id && (item.selectedSize || '') === (size || '')) ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)
       .filter(item => item.quantity > 0);
     setCartItems(updated);
     localStorage.setItem('cart', JSON.stringify(updated));
     window.dispatchEvent(new Event('cart-updated'));
   };
 
-  const removeItem = (id) => {
-    const updated = cartItems.filter(item => item._id !== id);
+  const removeItem = (id, size) => {
+    const updated = cartItems.filter(item => !(item._id === id && (item.selectedSize || '') === (size || '')));
     setCartItems(updated);
     localStorage.setItem('cart', JSON.stringify(updated));
     window.dispatchEvent(new Event('cart-updated'));
@@ -97,6 +97,7 @@ function Cart() {
     const items = cartItems.map(item => ({
       productId: item._id,
       quantity: item.quantity,
+      size: item.selectedSize || '',
     }));
 
     try {
@@ -185,7 +186,7 @@ function Cart() {
         <div style={styles.layout} className="cart-layout">
           <div style={styles.itemsList}>
             {cartItems.map(item => (
-              <div key={item._id} style={styles.cartItem} className="cart-item-row">
+              <div key={`${item._id}-${item.selectedSize || ''}`} style={styles.cartItem} className="cart-item-row">
                 <img
                   src={getImageUrl(item)}
                   alt={item.name}
@@ -201,15 +202,20 @@ function Cart() {
                 </div>
                 <div style={styles.itemInfo}>
                   <h3 style={styles.itemName}>{item.name}</h3>
+                  {item.selectedSize && (
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 6px' }}>
+                      Size: <strong style={{ color: 'var(--text-primary)' }}>{item.selectedSize}</strong>
+                    </p>
+                  )}
                   <p style={styles.itemPrice}>₹{item.price}</p>
                 </div>
                 <div style={styles.qtyControls}>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} style={styles.qtyBtn} onClick={() => updateQuantity(item._id, -1)}>−</motion.button>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} style={styles.qtyBtn} onClick={() => updateQuantity(item._id, item.selectedSize, -1)}>−</motion.button>
                   <span style={styles.qtyValue}>{item.quantity}</span>
-                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} style={styles.qtyBtn} onClick={() => updateQuantity(item._id, 1)}>+</motion.button>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} style={styles.qtyBtn} onClick={() => updateQuantity(item._id, item.selectedSize, 1)}>+</motion.button>
                 </div>
                 <div style={styles.itemSubtotal}>₹{(item.price * item.quantity).toFixed(2)}</div>
-                <motion.button whileHover={{ scale: 1.1, color: '#ef4444' }} whileTap={{ scale: 0.9 }} style={styles.removeBtn} onClick={() => removeItem(item._id)}>✕</motion.button>
+                <motion.button whileHover={{ scale: 1.1, color: '#ef4444' }} whileTap={{ scale: 0.9 }} style={styles.removeBtn} onClick={() => removeItem(item._id, item.selectedSize)}>✕</motion.button>
               </div>
             ))}
           </div>
@@ -298,7 +304,7 @@ function Cart() {
                   onClick={handleCheckout}
                   disabled={checkingOut || loading}
                 >
-                  {checkingOut ? 'Processing...' : 'Checkout'}
+                  {checkingOut ? 'Processing...' : 'Order Now'}
                 </motion.button>
               </>
             ) : !loading ? (

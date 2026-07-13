@@ -20,17 +20,44 @@ function ProductDetail() {
   const [added, setAdded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
+  const isClothing = product?.category?.toLowerCase() === 'clothing' || 
+                     product?.name?.toLowerCase().includes('shirt') || 
+                     product?.name?.toLowerCase().includes('pants') || 
+                     product?.name?.toLowerCase().includes('kurti') ||
+                     product?.name?.toLowerCase().includes('dress') || 
+                     product?.name?.toLowerCase().includes('jeans') || 
+                     product?.name?.toLowerCase().includes('jacket') || 
+                     product?.name?.toLowerCase().includes('blazer') ||
+                     product?.name?.toLowerCase().includes('kurta');
+
+  const isShoes = product?.category?.toLowerCase() === 'shoes' ||
+                  product?.category?.toLowerCase() === 'footwear' ||
+                  product?.name?.toLowerCase().includes('shoe') ||
+                  product?.name?.toLowerCase().includes('sneaker') ||
+                  product?.name?.toLowerCase().includes('boot') ||
+                  product?.name?.toLowerCase().includes('sandal') ||
+                  product?.name?.toLowerCase().includes('slipper') ||
+                  product?.name?.toLowerCase().includes('running shoes');
+
+  const sizes = isShoes 
+    ? ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
+    : isClothing 
+    ? ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+    : null;
+
+  const [selectedSize, setSelectedSize] = useState('');
+  const [sizeError, setSizeError] = useState('');
   const [isInCart, setIsInCart] = useState(false);
 
   const checkCart = useCallback(() => {
     if (!product?._id) return false;
     try {
       const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      return cart.some(item => item._id === product._id);
+      return cart.some(item => item._id === product._id && (!sizes || item.selectedSize === selectedSize));
     } catch {
       return false;
     }
-  }, [product]);
+  }, [product, selectedSize, sizes]);
 
   useEffect(() => {
     setIsInCart(checkCart());
@@ -108,20 +135,26 @@ function ProductDetail() {
   }, [id]);
 
   const addToCart = () => {
+    if (sizes && !selectedSize) {
+      setSizeError('Please select a size before adding to cart');
+      return;
+    }
+    setSizeError('');
+
     if (isInCart) {
       navigate('/cart');
       return;
     }
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existing = cart.find(item => item._id === product._id);
+    const existingIndex = cart.findIndex(item => item._id === product._id && (!sizes || item.selectedSize === selectedSize));
 
     let updated;
-    if (existing) {
-      updated = cart.map(item =>
-        item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+    if (existingIndex > -1) {
+      updated = cart.map((item, idx) =>
+        idx === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
       );
     } else {
-      updated = [...cart, { ...product, quantity: 1 }];
+      updated = [...cart, { ...product, selectedSize: sizes ? selectedSize : '', quantity: 1 }];
     }
 
     localStorage.setItem('cart', JSON.stringify(updated));
@@ -232,6 +265,51 @@ function ProductDetail() {
               </div>
             </div>
           </div>
+
+          {/* Size Selector */}
+          {sizes && (
+            <div style={{ marginBottom: '24px', marginTop: '16px' }}>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.8px',
+                marginBottom: '8px',
+                display: 'block',
+              }}>{isShoes ? 'Select Shoe Size' : 'Select Size'}</span>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                {sizes.map(size => (
+                  <button
+                    key={size}
+                    onClick={() => {
+                      setSelectedSize(size);
+                      setSizeError('');
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: '1.5px solid',
+                      borderColor: selectedSize === size ? 'var(--primary)' : 'var(--border)',
+                      background: selectedSize === size ? 'var(--primary)' : 'transparent',
+                      color: selectedSize === size ? '#fff' : 'var(--text-primary)',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+              {sizeError && (
+                <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '8px', fontWeight: 600 }}>
+                  ⚠️ {sizeError}
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: '16px', width: '100%', marginTop: '8px' }}>
             <motion.button
