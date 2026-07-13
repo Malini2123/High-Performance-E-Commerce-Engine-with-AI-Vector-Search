@@ -11,6 +11,25 @@ function Wishlist() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('cart') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      try {
+        setCartItems(JSON.parse(localStorage.getItem('cart') || '[]'));
+      } catch {}
+    };
+    window.addEventListener('cart-updated', handleCartUpdate);
+    return () => {
+      window.removeEventListener('cart-updated', handleCartUpdate);
+    };
+  }, []);
 
   // Restore scroll position on page refresh
   useScrollRestore(loading);
@@ -109,8 +128,14 @@ function Wishlist() {
             <div key={product._id} style={styles.cardWrapper}>
               <ProductCard product={product} />
               <div style={styles.actions}>
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={styles.cartBtn} onClick={() => addToCart(product)}>
-                  🛒 Add to Cart
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={styles.cartBtn} onClick={() => {
+                  if (cartItems.some(i => i._id === product._id)) {
+                    navigate('/cart');
+                  } else {
+                    addToCart(product);
+                  }
+                }}>
+                  {cartItems.some(i => i._id === product._id) ? '🛍️ Buy Now' : '🛒 Add to Cart'}
                 </motion.button>
                 <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={styles.removeBtn} onClick={() => removeFromWishlist(product._id)}>
                   ✕ Remove

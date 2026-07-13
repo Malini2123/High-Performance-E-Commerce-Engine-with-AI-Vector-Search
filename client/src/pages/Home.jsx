@@ -111,8 +111,33 @@ function DealCard({ product, navigate }) {
   const { original, discountPct } = getOffer(product);
   const img = product.image || getImageUrl(product);
 
+  const checkCart = () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      return cart.some(i => i._id === product._id);
+    } catch {
+      return false;
+    }
+  };
+
+  const [isInCart, setIsInCart] = useState(checkCart);
+
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      setIsInCart(checkCart());
+    };
+    window.addEventListener('cart-updated', handleCartUpdate);
+    return () => {
+      window.removeEventListener('cart-updated', handleCartUpdate);
+    };
+  }, [product._id]);
+
   const addToCart = (e) => {
     e.stopPropagation();
+    if (isInCart) {
+      navigate('/cart');
+      return;
+    }
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const existing = cart.find(i => i._id === product._id);
     const updated = existing
@@ -199,7 +224,7 @@ function DealCard({ product, navigate }) {
             cursor: 'pointer',
           }}
         >
-          🛒 Add to Cart
+          {isInCart ? '🛍️ Buy Now' : '🛒 Add to Cart'}
         </motion.button>
       </div>
     </motion.div>

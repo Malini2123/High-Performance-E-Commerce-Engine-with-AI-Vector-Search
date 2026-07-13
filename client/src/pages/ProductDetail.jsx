@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import ProductCard from '../components/ProductCard';
@@ -19,6 +19,32 @@ function ProductDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [added, setAdded] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  const [isInCart, setIsInCart] = useState(false);
+
+  const checkCart = useCallback(() => {
+    if (!product?._id) return false;
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      return cart.some(item => item._id === product._id);
+    } catch {
+      return false;
+    }
+  }, [product]);
+
+  useEffect(() => {
+    setIsInCart(checkCart());
+  }, [product, checkCart]);
+
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      setIsInCart(checkCart());
+    };
+    window.addEventListener('cart-updated', handleCartUpdate);
+    return () => {
+      window.removeEventListener('cart-updated', handleCartUpdate);
+    };
+  }, [checkCart]);
 
   // Restore scroll after refresh (waits for product data)
   useScrollRestore(loading);
@@ -82,6 +108,10 @@ function ProductDetail() {
   }, [id]);
 
   const addToCart = () => {
+    if (isInCart) {
+      navigate('/cart');
+      return;
+    }
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const existing = cart.find(item => item._id === product._id);
 
@@ -236,7 +266,7 @@ function ProductDetail() {
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {product.stock === 0 ? 'Out of Stock' : '🛒 Add to Cart'}
+                    {product.stock === 0 ? 'Out of Stock' : isInCart ? '🛍️ Buy Now' : '🛒 Add to Cart'}
                   </motion.span>
                 )}
               </AnimatePresence>

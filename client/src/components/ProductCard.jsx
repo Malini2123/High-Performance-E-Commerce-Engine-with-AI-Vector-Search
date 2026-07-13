@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getImageUrl, getFallbackImage } from '../utils/images';
 import apiClient from '../api/client';
@@ -43,6 +43,27 @@ function ProductCard({ product }) {
   const [added, setAdded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
+  const checkCart = () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      return cart.some(item => item._id === product._id);
+    } catch {
+      return false;
+    }
+  };
+
+  const [isInCart, setIsInCart] = useState(checkCart);
+
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      setIsInCart(checkCart());
+    };
+    window.addEventListener('cart-updated', handleCartUpdate);
+    return () => {
+      window.removeEventListener('cart-updated', handleCartUpdate);
+    };
+  }, [product._id]);
+
   const token = localStorage.getItem('token');
   const [isWishlisted, setIsWishlisted] = useState(() => {
     try {
@@ -81,6 +102,10 @@ function ProductCard({ product }) {
   const addToCart = (e) => {
     e.stopPropagation();
     if (product.stock === 0) return;
+    if (isInCart) {
+      navigate('/cart');
+      return;
+    }
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const existing = cart.find(item => item._id === product._id);
     const updated = existing
@@ -217,7 +242,7 @@ function ProductCard({ product }) {
                 transition={{ duration: 0.2 }}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 4, justifyContent: 'center', width: '100%' }}
               >
-                {product.stock === 0 ? 'Out of Stock' : '🛒 Add to Cart'}
+                {product.stock === 0 ? 'Out of Stock' : isInCart ? '🛍️ Buy Now' : '🛒 Add to Cart'}
               </motion.span>
             )}
           </AnimatePresence>
