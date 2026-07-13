@@ -63,7 +63,7 @@ function Cart() {
 
   const updateQuantity = (id, size, delta) => {
     const updated = cartItems
-      .map(item => (item._id === id && (item.selectedSize || '') === (size || '')) ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)
+      .map(item => (item._id === id && (item.selectedSize || '') === (size || '')) ? { ...item, quantity: item.quantity + delta } : item)
       .filter(item => item.quantity > 0);
     setCartItems(updated);
     localStorage.setItem('cart', JSON.stringify(updated));

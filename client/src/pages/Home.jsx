@@ -134,6 +134,41 @@ function DealCard({ product, navigate }) {
 
   const addToCart = (e) => {
     e.stopPropagation();
+
+    const nameLower = product.name?.toLowerCase() || '';
+    const catLower = product.category?.toLowerCase() || '';
+
+    const isShoes = catLower === 'shoes' || 
+                    catLower === 'footwear' || 
+                    nameLower.includes('shoe') || 
+                    nameLower.includes('sneaker') || 
+                    nameLower.includes('boot') || 
+                    nameLower.includes('sandal') || 
+                    nameLower.includes('slipper') || 
+                    nameLower.includes('flip-flop') || 
+                    nameLower.includes('slides');
+
+    const isClothing = (catLower === 'clothing' || 
+                        nameLower.includes('dress') ||
+                        nameLower.includes('shirt') || 
+                        nameLower.includes('pants') || 
+                        nameLower.includes('jeans') || 
+                        nameLower.includes('jacket') || 
+                        nameLower.includes('blazer') || 
+                        nameLower.includes('kurta') || 
+                        nameLower.includes('kurti') || 
+                        nameLower.includes('saree') || 
+                        nameLower.includes('gown') || 
+                        nameLower.includes('skirt') || 
+                        nameLower.includes('top') ||
+                        nameLower.includes('sweater') ||
+                        nameLower.includes('hoodie')) && !isShoes;
+
+    if (isShoes || isClothing) {
+      navigate(`/product/${product._id}`);
+      return;
+    }
+
     if (isInCart) {
       navigate('/cart');
       return;

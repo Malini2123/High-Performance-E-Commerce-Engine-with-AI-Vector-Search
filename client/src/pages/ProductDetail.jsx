@@ -20,24 +20,34 @@ function ProductDetail() {
   const [added, setAdded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  const isClothing = product?.category?.toLowerCase() === 'clothing' || 
-                     product?.name?.toLowerCase().includes('shirt') || 
-                     product?.name?.toLowerCase().includes('pants') || 
-                     product?.name?.toLowerCase().includes('kurti') ||
-                     product?.name?.toLowerCase().includes('dress') || 
-                     product?.name?.toLowerCase().includes('jeans') || 
-                     product?.name?.toLowerCase().includes('jacket') || 
-                     product?.name?.toLowerCase().includes('blazer') ||
-                     product?.name?.toLowerCase().includes('kurta');
+  const nameLower = product?.name?.toLowerCase() || '';
+  const catLower = product?.category?.toLowerCase() || '';
 
-  const isShoes = product?.category?.toLowerCase() === 'shoes' ||
-                  product?.category?.toLowerCase() === 'footwear' ||
-                  product?.name?.toLowerCase().includes('shoe') ||
-                  product?.name?.toLowerCase().includes('sneaker') ||
-                  product?.name?.toLowerCase().includes('boot') ||
-                  product?.name?.toLowerCase().includes('sandal') ||
-                  product?.name?.toLowerCase().includes('slipper') ||
-                  product?.name?.toLowerCase().includes('running shoes');
+  const isShoes = catLower === 'shoes' || 
+                  catLower === 'footwear' || 
+                  nameLower.includes('shoe') || 
+                  nameLower.includes('sneaker') || 
+                  nameLower.includes('boot') || 
+                  nameLower.includes('sandal') || 
+                  nameLower.includes('slipper') || 
+                  nameLower.includes('flip-flop') || 
+                  nameLower.includes('slides');
+
+  const isClothing = (catLower === 'clothing' || 
+                      nameLower.includes('dress') ||
+                      nameLower.includes('shirt') || 
+                      nameLower.includes('pants') || 
+                      nameLower.includes('jeans') || 
+                      nameLower.includes('jacket') || 
+                      nameLower.includes('blazer') || 
+                      nameLower.includes('kurta') || 
+                      nameLower.includes('kurti') || 
+                      nameLower.includes('saree') || 
+                      nameLower.includes('gown') || 
+                      nameLower.includes('skirt') || 
+                      nameLower.includes('top') ||
+                      nameLower.includes('sweater') ||
+                      nameLower.includes('hoodie')) && !isShoes;
 
   const sizes = isShoes 
     ? ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
@@ -47,6 +57,7 @@ function ProductDetail() {
 
   const [selectedSize, setSelectedSize] = useState('');
   const [sizeError, setSizeError] = useState('');
+  const [showSizeChart, setShowSizeChart] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
 
   const checkCart = useCallback(() => {
@@ -269,15 +280,33 @@ function ProductDetail() {
           {/* Size Selector */}
           {sizes && (
             <div style={{ marginBottom: '24px', marginTop: '16px' }}>
-              <span style={{
-                fontSize: '11px',
-                fontWeight: 800,
-                color: 'var(--text-muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.8px',
-                marginBottom: '8px',
-                display: 'block',
-              }}>{isShoes ? 'Select Shoe Size' : 'Select Size'}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: 'var(--text-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.8px',
+                  display: 'block',
+                }}>{isShoes ? 'Select Shoe Size' : 'Select Size'}</span>
+                
+                <button 
+                  onClick={() => setShowSizeChart(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--primary)',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    padding: 0,
+                  }}
+                >
+                  Size Chart
+                </button>
+              </div>
+
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
                 {sizes.map(size => (
                   <button
@@ -287,16 +316,22 @@ function ProductDetail() {
                       setSizeError('');
                     }}
                     style={{
-                      padding: '8px 16px',
+                      minWidth: '48px',
+                      height: '48px',
+                      padding: '0 12px',
                       borderRadius: '8px',
                       border: '1.5px solid',
                       borderColor: selectedSize === size ? 'var(--primary)' : 'var(--border)',
-                      background: selectedSize === size ? 'var(--primary)' : 'transparent',
+                      background: selectedSize === size ? 'var(--primary)' : '#fff',
                       color: selectedSize === size ? '#fff' : 'var(--text-primary)',
                       fontWeight: 700,
                       fontSize: '13px',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: selectedSize === size ? '0 4px 12px rgba(99, 102, 241, 0.2)' : 'none',
                     }}
                   >
                     {size}
@@ -432,7 +467,109 @@ function ProductDetail() {
           </div>
         </div>
       )}
-    </div>
+     </div>
+
+      {/* Size Chart Modal */}
+      <AnimatePresence>
+        {showSizeChart && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSizeChart(false)}
+              style={{
+                position: 'fixed',
+                inset: 0,
+                background: 'rgba(0,0,0,0.5)',
+                backdropFilter: 'blur(4px)',
+                zIndex: 2000,
+              }}
+            />
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              style={{
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                background: '#fff',
+                padding: '32px',
+                borderRadius: '16px',
+                boxShadow: 'var(--shadow-xl)',
+                zIndex: 2001,
+                width: '90%',
+                maxWidth: '500px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                  {isShoes ? 'Shoe Size Chart' : 'Clothing Size Chart'}
+                </h3>
+                <button 
+                  onClick={() => setShowSizeChart(false)}
+                  style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border)', background: 'var(--bg-secondary)', textAlign: 'left' }}>
+                    <th style={{ padding: '12px' }}>Size</th>
+                    <th style={{ padding: '12px' }}>{isShoes ? 'US Size' : 'Chest (in)'}</th>
+                    <th style={{ padding: '12px' }}>{isShoes ? 'UK Size' : 'Waist (in)'}</th>
+                    <th style={{ padding: '12px' }}>{isShoes ? 'Length (cm)' : 'Length (in)'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isShoes ? (
+                    <>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>UK 6</td><td style={{ padding: '12px' }}>7</td><td style={{ padding: '12px' }}>6</td><td style={{ padding: '12px' }}>24.5</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>UK 7</td><td style={{ padding: '12px' }}>8</td><td style={{ padding: '12px' }}>7</td><td style={{ padding: '12px' }}>25.4</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>UK 8</td><td style={{ padding: '12px' }}>9</td><td style={{ padding: '12px' }}>8</td><td style={{ padding: '12px' }}>26.2</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>UK 9</td><td style={{ padding: '12px' }}>10</td><td style={{ padding: '12px' }}>9</td><td style={{ padding: '12px' }}>27.1</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>UK 10</td><td style={{ padding: '12px' }}>11</td><td style={{ padding: '12px' }}>10</td><td style={{ padding: '12px' }}>27.9</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>UK 11</td><td style={{ padding: '12px' }}>12</td><td style={{ padding: '12px' }}>11</td><td style={{ padding: '12px' }}>28.8</td></tr>
+                    </>
+                  ) : (
+                    <>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>XS</td><td style={{ padding: '12px' }}>34</td><td style={{ padding: '12px' }}>28</td><td style={{ padding: '12px' }}>26</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>S</td><td style={{ padding: '12px' }}>36</td><td style={{ padding: '12px' }}>30</td><td style={{ padding: '12px' }}>27</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>M</td><td style={{ padding: '12px' }}>38</td><td style={{ padding: '12px' }}>32</td><td style={{ padding: '12px' }}>28</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>L</td><td style={{ padding: '12px' }}>40</td><td style={{ padding: '12px' }}>34</td><td style={{ padding: '12px' }}>29</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>XL</td><td style={{ padding: '12px' }}>42</td><td style={{ padding: '12px' }}>36</td><td style={{ padding: '12px' }}>30</td></tr>
+                      <tr style={{ borderBottom: '1px solid var(--border)' }}><td style={{ padding: '12px' }}>XXL</td><td style={{ padding: '12px' }}>44</td><td style={{ padding: '12px' }}>38</td><td style={{ padding: '12px' }}>31</td></tr>
+                    </>
+                  )}
+                </tbody>
+              </table>
+
+              <button
+                onClick={() => setShowSizeChart(false)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'var(--primary)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  marginTop: '24px',
+                }}
+              >
+                Close Size Chart
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </AnimatedPage>
   );
 }

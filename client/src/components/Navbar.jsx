@@ -187,10 +187,10 @@ function Navbar() {
 
           <div style={styles.links} className="nav-desktop-links">
             <Link to="/" className="nav-link">Products</Link>
-            <button
-              onClick={() => setIsDrawerOpen(true)}
+            <Link
+              to="/cart"
               className="nav-link"
-              style={styles.navButton}
+              style={{ ...styles.navButton, display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
             >
               Cart
               <AnimatePresence>
@@ -207,7 +207,7 @@ function Navbar() {
                   </motion.span>
                 )}
               </AnimatePresence>
-            </button>
+            </Link>
             
             <Link to="/wishlist" className="nav-link" style={{ position: 'relative' }}>
               Wishlist
@@ -311,13 +311,14 @@ function Navbar() {
             >
               <Link to="/" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>🛍️ Products</Link>
               
-              <button
-                onClick={() => { setIsDrawerOpen(true); setIsMobileMenuOpen(false); }}
+              <Link
+                to="/cart"
                 className="nav-link"
-                style={{ ...styles.navButton, textAlign: 'left', width: '100%' }}
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
               >
-                🛒 Cart {cartCount > 0 && <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '12px', padding: '1px 6px', fontSize: '10px', fontWeight: 800, marginLeft: '5px' }}>{cartCount}</span>}
-              </button>
+                🛒 Cart {cartCount > 0 && <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '12px', padding: '1px 6px', fontSize: '10px', fontWeight: 800 }}>{cartCount}</span>}
+              </Link>
               
               <Link to="/wishlist" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>❤️ Wishlist {wishlistCount > 0 && <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '12px', padding: '1px 6px', fontSize: '10px', fontWeight: 800, marginLeft: '5px' }}>{wishlistCount}</span>}</Link>
               <Link to="/orders" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>📦 Orders</Link>

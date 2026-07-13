@@ -79,6 +79,40 @@ function Wishlist() {
   };
 
   const addToCart = (product) => {
+    const nameLower = product.name?.toLowerCase() || '';
+    const catLower = product.category?.toLowerCase() || '';
+
+    const isShoes = catLower === 'shoes' || 
+                    catLower === 'footwear' || 
+                    nameLower.includes('shoe') || 
+                    nameLower.includes('sneaker') || 
+                    nameLower.includes('boot') || 
+                    nameLower.includes('sandal') || 
+                    nameLower.includes('slipper') || 
+                    nameLower.includes('flip-flop') || 
+                    nameLower.includes('slides');
+
+    const isClothing = (catLower === 'clothing' || 
+                        nameLower.includes('dress') ||
+                        nameLower.includes('shirt') || 
+                        nameLower.includes('pants') || 
+                        nameLower.includes('jeans') || 
+                        nameLower.includes('jacket') || 
+                        nameLower.includes('blazer') || 
+                        nameLower.includes('kurta') || 
+                        nameLower.includes('kurti') || 
+                        nameLower.includes('saree') || 
+                        nameLower.includes('gown') || 
+                        nameLower.includes('skirt') || 
+                        nameLower.includes('top') ||
+                        nameLower.includes('sweater') ||
+                        nameLower.includes('hoodie')) && !isShoes;
+
+    if (isShoes || isClothing) {
+      navigate(`/product/${product._id}`);
+      return;
+    }
+
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     const existing = cart.find(i => i._id === product._id);
     if (existing) {
@@ -127,20 +161,6 @@ function Wishlist() {
           {items.map(product => (
             <div key={product._id} style={styles.cardWrapper}>
               <ProductCard product={product} />
-              <div style={styles.actions}>
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={styles.cartBtn} onClick={() => {
-                  if (cartItems.some(i => i._id === product._id)) {
-                    navigate('/cart');
-                  } else {
-                    addToCart(product);
-                  }
-                }}>
-                  {cartItems.some(i => i._id === product._id) ? '🛍️ Buy Now' : '🛒 Add to Cart'}
-                </motion.button>
-                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={styles.removeBtn} onClick={() => removeFromWishlist(product._id)}>
-                  ✕ Remove
-                </motion.button>
-              </div>
             </div>
           ))}
         </div>
