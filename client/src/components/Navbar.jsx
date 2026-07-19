@@ -241,8 +241,12 @@ function Navbar() {
                 onMouseEnter={() => setShowProfileMenu(true)}
                 onMouseLeave={() => setShowProfileMenu(false)}
               >
-                <div style={styles.avatar}>
-                  {user.name ? user.name[0].toUpperCase() : 'U'}
+                <div style={{...styles.avatar, overflow: 'hidden'}}>
+                  {user.profilePic ? (
+                    <img src={user.profilePic.startsWith('http') ? user.profilePic : `http://localhost:5000${user.profilePic}`} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    user.name ? user.name[0].toUpperCase() : 'U'
+                  )}
                 </div>
                 <AnimatePresence>
                   {showProfileMenu && (
@@ -258,6 +262,9 @@ function Navbar() {
                         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{user.email}</div>
                       </div>
                       <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0' }} />
+                      <button onClick={() => navigate('/profile')} style={styles.dropdownItem} className="dropdown-item-hover">
+                        👤 Profile
+                      </button>
                       <button onClick={handleLogout} style={styles.dropdownItem} className="dropdown-item-hover">
                         🚪 Logout
                       </button>
@@ -334,11 +341,18 @@ function Navbar() {
               {user ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ ...styles.avatar, width: '28px', height: '28px', fontSize: '12px' }}>
-                      {user.name ? user.name[0].toUpperCase() : 'U'}
+                    <div style={{ ...styles.avatar, width: '28px', height: '28px', fontSize: '12px', overflow: 'hidden' }}>
+                      {user.profilePic ? (
+                        <img src={user.profilePic.startsWith('http') ? user.profilePic : `http://localhost:5000${user.profilePic}`} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        user.name ? user.name[0].toUpperCase() : 'U'
+                      )}
                     </div>
                     {user.name}
                   </div>
+                  <button onClick={() => { setIsMobileMenuOpen(false); navigate('/profile'); }} style={{ ...styles.dropdownItem, padding: '8px 0' }} className="dropdown-item-hover">
+                    👤 Profile
+                  </button>
                   <button onClick={handleLogout} style={{ ...styles.dropdownItem, padding: '8px 0', color: 'var(--danger)' }} className="dropdown-item-hover">
                     🚪 Logout
                   </button>

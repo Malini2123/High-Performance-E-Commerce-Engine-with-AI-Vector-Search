@@ -27,6 +27,9 @@ const authLimiter = rateLimit({
 
 app.use(cors());
 app.use(express.json());
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use('/api/', limiter);
 app.use('/api/auth', authLimiter);
 

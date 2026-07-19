@@ -4,25 +4,28 @@ import apiClient from '../api/client';
 import AnimatedPage from '../components/AnimatedPage';
 import { motion } from 'framer-motion';
 
-function Register() {
+function ForgotPassword() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+
+  const [form, setForm] = useState({ email: '', newPassword: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess(false);
     try {
-      const res = await apiClient.post('/auth/register', form);
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      localStorage.setItem('wishlistIds', '[]');
-      navigate('/');
+      await apiClient.post('/auth/reset-password', form);
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 2000);
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      setError(err.response?.data?.error || 'Password reset failed');
     }
     setLoading(false);
   };
@@ -56,59 +59,26 @@ function Register() {
                   />
                   <span>ZapCart</span>
                 </div>
-                <h2 style={styles.visualTitle}>Experience the Future of Smart Commerce</h2>
+                <h2 style={styles.visualTitle}>Secure Account Recovery</h2>
                 <p style={styles.visualDesc}>
-                  Discover intelligent recommendations, lightning-fast semantic search, and secure checkouts tailored for you.
+                  Regain access to your intelligent shopping assistant and personalized recommendations.
                 </p>
               </motion.div>
-
-              {/* Animated Floating Badges */}
-              <div style={styles.floatingBadges}>
-                {[
-                  { label: 'AI Personalization', icon: '✨', delay: 0.4, y: [0, -10, 0] },
-                  { label: 'Safe Checkout', icon: '🔒', delay: 0.6, y: [0, -8, 0] },
-                  { label: 'Direct Shipping', icon: '🚚', delay: 0.8, y: [0, -12, 0] },
-                ].map((badge, idx) => (
-                  <motion.div
-                    key={idx}
-                    style={styles.badgeCard}
-                    animate={{ y: badge.y }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 3 + idx,
-                      ease: 'easeInOut',
-                      delay: badge.delay
-                    }}
-                  >
-                    <span>{badge.icon}</span> {badge.label}
-                  </motion.div>
-                ))}
-              </div>
             </div>
           </div>
 
           {/* Right Column - Form */}
           <div style={styles.formCol}>
             <div style={styles.card}>
-              <h1 style={styles.title}>Create account</h1>
-              <p style={styles.subtitle}>Join ZapCart today</p>
+              <h1 style={styles.title}>Reset Password</h1>
+              <p style={styles.subtitle}>Enter your email to set a new password</p>
 
               {error && <div style={styles.error}>{error}</div>}
+              {success && <div style={styles.success}>Password reset successfully! Redirecting...</div>}
 
               <form onSubmit={handleSubmit} style={styles.form}>
                 <div style={styles.field}>
-                  <label style={styles.label}>Full Name</label>
-                  <input
-                    style={styles.input}
-                    type="text"
-                    placeholder="Your name"
-                    value={form.name}
-                    onChange={e => setForm({...form, name: e.target.value})}
-                    required
-                  />
-                </div>
-                <div style={styles.field}>
-                  <label style={styles.label}>Email</label>
+                  <label style={styles.label}>Email Address</label>
                   <input
                     style={styles.input}
                     type="email"
@@ -119,16 +89,16 @@ function Register() {
                   />
                 </div>
                 <div style={styles.field}>
-                  <label style={styles.label}>Password</label>
+                  <label style={styles.label}>New Password</label>
                   <div style={{ position: 'relative' }}>
                     <input
                       style={{ ...styles.input, width: '100%', paddingRight: '40px', boxSizing: 'border-box' }}
                       type={showPassword ? "text" : "password"}
-                      placeholder="Min 6 characters"
-                      value={form.password}
-                      onChange={e => setForm({...form, password: e.target.value})}
-                      minLength={6}
+                      placeholder="••••••••"
+                      value={form.newPassword}
+                      onChange={e => setForm({...form, newPassword: e.target.value})}
                       required
+                      minLength={6}
                     />
                     <button
                       type="button"
@@ -154,16 +124,16 @@ function Register() {
                 <motion.button
                   type="submit"
                   style={styles.btn}
-                  disabled={loading}
+                  disabled={loading || success}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {loading ? 'Creating account...' : 'Create Account'}
+                  {loading ? 'Resetting...' : 'Reset Password'}
                 </motion.button>
               </form>
 
               <p style={styles.switchText}>
-                Already have an account?{' '}
+                Remember your password?{' '}
                 <Link to="/login" style={styles.link}>Login here</Link>
               </p>
             </div>
@@ -260,26 +230,6 @@ const styles = {
     margin: 0,
     maxWidth: '400px',
   },
-  floatingBadges: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    marginTop: '40px',
-  },
-  badgeCard: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: 'rgba(255,255,255,0.08)',
-    border: '1px solid rgba(255,255,255,0.05)',
-    backdropFilter: 'blur(10px)',
-    padding: '10px 16px',
-    borderRadius: '12px',
-    fontSize: '13px',
-    fontWeight: 600,
-    color: '#fff',
-    width: 'fit-content',
-  },
   formCol: {
     flex: '1 1 400px',
     display: 'flex',
@@ -298,6 +248,16 @@ const styles = {
     background: 'rgba(239, 68, 68, 0.1)',
     border: '1px solid rgba(239, 68, 68, 0.2)',
     color: '#ef4444',
+    padding: '12px',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    fontSize: '14px',
+    fontWeight: 500,
+  },
+  success: {
+    background: 'rgba(34, 197, 94, 0.1)',
+    border: '1px solid rgba(34, 197, 94, 0.2)',
+    color: '#15803d',
     padding: '12px',
     borderRadius: '8px',
     marginBottom: '20px',
@@ -334,4 +294,4 @@ const styles = {
   link: { color: 'var(--primary)', fontWeight: 700, textDecoration: 'none' },
 };
 
-export default Register;
+export default ForgotPassword;

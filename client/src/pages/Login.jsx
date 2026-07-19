@@ -10,6 +10,7 @@ function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -127,14 +128,38 @@ function Login() {
                 </div>
                 <div style={styles.field}>
                   <label style={styles.label}>Password</label>
-                  <input
-                    style={styles.input}
-                    type="password"
-                    placeholder="••••••••"
-                    value={form.password}
-                    onChange={e => setForm({...form, password: e.target.value})}
-                    required
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      style={{ ...styles.input, width: '100%', paddingRight: '40px', boxSizing: 'border-box' }}
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={form.password}
+                      onChange={e => setForm({...form, password: e.target.value})}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        padding: 0,
+                        opacity: showPassword ? 1 : 0.5
+                      }}
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      👁️
+                    </button>
+                  </div>
+                  <div style={{ textAlign: 'right', marginTop: '4px' }}>
+                    <Link to="/forgot-password" style={{ fontSize: '13px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Forgot Password?</Link>
+                  </div>
                 </div>
                 <motion.button
                   type="submit"

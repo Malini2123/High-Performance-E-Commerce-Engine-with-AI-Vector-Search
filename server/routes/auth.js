@@ -3,6 +3,21 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
+const authMiddleware = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+
+// Multer storage setup
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, req.user._id + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage: storage });
 
 const ensureAdminUser = async () => {
   try {
@@ -42,7 +57,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json({
       message: 'Registered successfully',
       token: generateToken(user._id),
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, address: user.address, profilePic: user.profilePic }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -60,7 +75,7 @@ router.post('/login', async (req, res) => {
     res.json({
       message: 'Login successful',
       token: generateToken(user._id),
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, address: user.address, profilePic: user.profilePic }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -77,6 +92,52 @@ router.get('/me', async (req, res) => {
     res.json({ user });
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password are required' });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    user.password = newPassword;
+    await user.save();
+    res.json({ message: 'Password reset successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/auth/profile
+router.put('/profile', authMiddleware, upload.single('profilePicFile'), async (req, res) => {
+  try {
+    const { name, address, profilePic } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    if (name) user.name = name;
+    if (address !== undefined) user.address = address;
+    
+    // If a file was uploaded, use the new file URL. Otherwise, use the provided URL string (if any).
+    if (req.file) {
+      user.profilePic = `/uploads/${req.file.filename}`;
+    } else if (profilePic !== undefined) {
+      user.profilePic = profilePic;
+    }
+    
+    await user.save();
+    res.json({
+      message: 'Profile updated successfully',
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, address: user.address, profilePic: user.profilePic }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

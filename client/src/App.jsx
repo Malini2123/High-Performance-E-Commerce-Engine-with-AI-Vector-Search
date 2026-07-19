@@ -16,6 +16,8 @@ import Wishlist from './pages/Wishlist';
 import Orders from './pages/Orders';
 import Analytics from './pages/Analytics';
 import Admin from './pages/Admin';
+import Profile from './pages/Profile';
+import ForgotPassword from './pages/ForgotPassword';
 import apiClient from './api/client';
 // CursorGlow removed — user does not want mouse-following circle
 
@@ -46,6 +48,8 @@ function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/orders" element={<Orders />} />
