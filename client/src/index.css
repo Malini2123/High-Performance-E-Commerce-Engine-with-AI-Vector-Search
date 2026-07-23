@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+/* Disable browser native password reveal button to avoid double eye icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 :root {
   /* === Brand Colors === */
   --primary:        #0B2F1D; /* Deep Forest Green */
