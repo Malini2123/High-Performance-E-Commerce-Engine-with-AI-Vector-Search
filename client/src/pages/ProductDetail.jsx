@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import ProductCard from '../components/ProductCard';
@@ -49,11 +49,13 @@ function ProductDetail() {
                       nameLower.includes('sweater') ||
                       nameLower.includes('hoodie')) && !isShoes;
 
-  const sizes = isShoes 
-    ? ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
-    : isClothing 
-    ? ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-    : null;
+  const sizes = useMemo(() => {
+    return isShoes 
+      ? ['UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11']
+      : isClothing 
+      ? ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+      : null;
+  }, [isShoes, isClothing]);
 
   const [selectedSize, setSelectedSize] = useState('');
   const [sizeError, setSizeError] = useState('');

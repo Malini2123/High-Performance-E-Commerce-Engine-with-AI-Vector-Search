@@ -19,7 +19,6 @@ function isBrowserRefresh() {
   try {
     const navEntry = performance.getEntriesByType('navigation')[0];
     if (navEntry) return navEntry.type === 'reload';
-    // eslint-disable-next-line no-restricted-globals
     return performance.navigation.type === 1;
   } catch {
     return false;

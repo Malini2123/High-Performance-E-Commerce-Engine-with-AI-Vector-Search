@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';

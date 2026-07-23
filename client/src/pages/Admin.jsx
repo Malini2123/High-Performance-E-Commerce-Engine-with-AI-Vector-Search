@@ -384,12 +384,6 @@ export default function Admin() {
     showToast('🗑️ Product deleted — Redis cache invalidated automatically!');
   }
 
-  /* ── Derived Stats from Products ── */
-  const avgPrice = products.length
-    ? Math.round(products.reduce((s, p) => s + p.price, 0) / products.length)
-    : 0;
-  const lowStock = products.filter(p => p.stock < 10).length;
-
   /* ── Filtered Orders ── */
   const filteredOrders = orders.filter(o => {
     // Status filter

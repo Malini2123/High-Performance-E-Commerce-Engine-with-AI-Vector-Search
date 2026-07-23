@@ -4,32 +4,12 @@ import apiClient from '../api/client';
 import ProductCard from '../components/ProductCard';
 import useScrollRestore from '../hooks/useScrollRestore';
 import AnimatedPage from '../components/AnimatedPage';
-import { motion } from 'framer-motion';
 
 function Wishlist() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [cartItems, setCartItems] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('cart') || '[]');
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    const handleCartUpdate = () => {
-      try {
-        setCartItems(JSON.parse(localStorage.getItem('cart') || '[]'));
-      } catch {}
-    };
-    window.addEventListener('cart-updated', handleCartUpdate);
-    return () => {
-      window.removeEventListener('cart-updated', handleCartUpdate);
-    };
-  }, []);
 
   // Restore scroll position on page refresh
   useScrollRestore(loading);
@@ -52,9 +32,9 @@ function Wishlist() {
           const list = res.data.wishlist || res.data.items || (Array.isArray(res.data) ? res.data : []);
           setItems(list);
         }
-      } catch {
+      } catch (err) {
         if (!ignore) {
-          setError('Could not load wishlist');
+          setError(err.message || 'Could not load wishlist');
         }
       }
       if (!ignore) {
@@ -68,61 +48,6 @@ function Wishlist() {
       ignore = true;
     };
   }, [navigate]);
-
-  const removeFromWishlist = async (productId) => {
-    try {
-      await apiClient.delete(`/wishlist/${productId}`);
-      setItems(prev => prev.filter(item => item._id !== productId));
-    } catch {
-      setError('Could not remove item');
-    }
-  };
-
-  const addToCart = (product) => {
-    const nameLower = product.name?.toLowerCase() || '';
-    const catLower = product.category?.toLowerCase() || '';
-
-    const isShoes = catLower === 'shoes' || 
-                    catLower === 'footwear' || 
-                    nameLower.includes('shoe') || 
-                    nameLower.includes('sneaker') || 
-                    nameLower.includes('boot') || 
-                    nameLower.includes('sandal') || 
-                    nameLower.includes('slipper') || 
-                    nameLower.includes('flip-flop') || 
-                    nameLower.includes('slides');
-
-    const isClothing = (catLower === 'clothing' || 
-                        nameLower.includes('dress') ||
-                        nameLower.includes('shirt') || 
-                        nameLower.includes('pants') || 
-                        nameLower.includes('jeans') || 
-                        nameLower.includes('jacket') || 
-                        nameLower.includes('blazer') || 
-                        nameLower.includes('kurta') || 
-                        nameLower.includes('kurti') || 
-                        nameLower.includes('saree') || 
-                        nameLower.includes('gown') || 
-                        nameLower.includes('skirt') || 
-                        nameLower.includes('top') ||
-                        nameLower.includes('sweater') ||
-                        nameLower.includes('hoodie')) && !isShoes;
-
-    if (isShoes || isClothing) {
-      navigate(`/product/${product._id}`);
-      return;
-    }
-
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existing = cart.find(i => i._id === product._id);
-    if (existing) {
-      existing.quantity += 1;
-    } else {
-      cart.push({ ...product, quantity: 1 });
-    }
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { openDrawer: true } }));
-  };
 
   if (loading) {
     return (

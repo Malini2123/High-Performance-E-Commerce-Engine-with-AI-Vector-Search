@@ -44,7 +44,6 @@ function isBrowserRefresh() {
       return navEntry.type === 'reload';
     }
     // Fallback for older browsers
-    // eslint-disable-next-line no-restricted-globals
     return performance.navigation.type === 1;
   } catch {
     return false;
@@ -92,7 +91,7 @@ export default function useScrollRestore(isLoading = false) {
 
     // On unmount: this route is being left by SPA navigation.
     // We DON'T clear here — the next mount will clear if it's not a refresh.
-  }, [location.pathname]); // re-run on every SPA navigation
+  }, [location.pathname, key]); // re-run on every SPA navigation
 
   // ── 3. Restore scroll position after content has loaded ───────────────────
   useEffect(() => {
